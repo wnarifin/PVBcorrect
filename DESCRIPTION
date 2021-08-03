@@ -1,0 +1,24 @@
+Package: PVBcorrect
+Type: Package
+Title: Perform partial verification bias correction for estimates of accuracy measures in diagnostic accuracy studies
+Version: 0.1.0
+Authors@R: 
+    person(given = "Wan Nor",
+           family = "Arifin",
+           role = c("aut", "cre"),
+           email = "wnarifin@gmail.com",
+           comment = c(ORCID = "0000-0001-7786-4251"))
+Author: Wan Nor Arifin [aut, cre]
+Maintainer: Wan Nor Arifin <wnarifin@gmail.com>
+URL: https://github.com/wnarifin/PVBcorrect/
+Description: The package contains a number of functions to perform partial verification bias 
+    (PVB) correction for estimates of accuracy measures in diagnostic accuracy studies. 
+    The available methods are Begg and Greenes' method (extended by Alonzo), multiple imputation 
+    method (logistic regression) and EM-based logistic regression method.
+License: GPL (>= 3)
+Encoding: UTF-8
+LazyData: true
+Imports:
+    prediction,
+    mice,
+    simstudy
