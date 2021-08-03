@@ -10,7 +10,7 @@ multiple imputation method (logistic regression) and EM-based logistic regressio
 Required packages are
 
 ```
-install.packages("prediction", "mice")
+install.packages("prediction", "mice", "simstudy")
 ```
 
 ### Installing
@@ -18,10 +18,18 @@ install.packages("prediction", "mice")
 Install the package by running
 
 ```
+install.packages("devtools")
 devtools::install_github("wnarifin/PVBcorrect")
+```
+
+or
+
+```
+install.packages("githubinstall")
+githubinstall::githubinstall("PVBcorrect")
 ```
 
 ## License
 
-This project is licensed under the MIT License - see the [LICENSE.md](LICENSE.md) file for details
+This project is licensed under the GPL (>= 3) License - see the [LICENSE.md](LICENSE.md) file for details
 
