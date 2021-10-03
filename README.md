@@ -11,7 +11,7 @@ available methods are:
 
 ## Prerequisites
 
-Required packages are:
+The required packages are:
 
 ```
 install.packages("boot", "mice")
