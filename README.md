@@ -9,7 +9,7 @@ available methods are:
 - multiple imputation method by logistic regression (Harel & Zhou, 2006)
 - EM-based logistic regression method (Kosinski & Barnhart, 2003)
 
-### Prerequisites
+## Prerequisites
 
 Required packages are:
 
@@ -17,7 +17,7 @@ Required packages are:
 install.packages("boot", "mice")
 ```
 
-### Installing
+## Installing
 
 Install PVBcorrect package by running:
 
