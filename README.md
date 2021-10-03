@@ -17,7 +17,7 @@ Required packages are:
 install.packages("boot", "mice")
 ```
 
-## Installing
+## Installation
 
 Install PVBcorrect package by running:
 
