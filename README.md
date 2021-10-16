@@ -22,8 +22,8 @@ install.packages("boot", "mice")
 Install PVBcorrect package by running
 
 ```
-install.packages("githubinstall")
-githubinstall::githubinstall("PVBcorrect")
+install.packages("devtools")
+devtools::install_github("wnarifin/PVBcorrect")
 ```
 
 ## License
