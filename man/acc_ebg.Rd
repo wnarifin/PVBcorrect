@@ -68,17 +68,15 @@ A list object containing:
 Perform PVB correction by Begg and Greenes' method (as extended by Alonzo & Pepe, 2005).
 }
 \examples{
-data = cad_pvb  # built-in data
-
 # point estimates
-acc_ebg(data, test = "T", disease = "D")
-acc_ebg(data, test = "T", disease = "D", covariate = "X1")
-acc_ebg(data, test = "T", disease = "D", covariate = "X1", saturated_model = TRUE)
+acc_ebg(data = cad_pvb, test = "T", disease = "D")
+acc_ebg(data = cad_pvb, test = "T", disease = "D", covariate = "X3")
+acc_ebg(data = cad_pvb, test = "T", disease = "D", covariate = "X3", saturated_model = TRUE)
 
 # with bootstrapped confidence interval
-acc_ebg(data, test = "T", disease = "D", ci = TRUE, seednum = 12345)
-acc_ebg(data, test = "T", disease = "D", covariate = "X1", ci = TRUE, seednum = 12345)
-acc_ebg(data, test = "T", disease = "D", covariate = "X1", saturated_model = TRUE,
+acc_ebg(data = cad_pvb, test = "T", disease = "D", ci = TRUE, seednum = 12345)
+acc_ebg(data = cad_pvb, test = "T", disease = "D", covariate = "X3", ci = TRUE, seednum = 12345)
+acc_ebg(data = cad_pvb, test = "T", disease = "D", covariate = "X3", saturated_model = TRUE,
         ci = TRUE, seednum = 12345)
 }
 \references{

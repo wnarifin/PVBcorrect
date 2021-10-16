@@ -14,7 +14,7 @@
 #' \code{\link{acc_cca}}, \code{\link{acc_ebg}}, \code{\link{acc_mi}}, \code{\link{acc_em}}
 #'
 #' @section PVB correction additional functions:
-#' \code{\link{acc_dg1}}, \code{\link{acc_dg2}}
+#' \code{\link{acc_bg}}, \code{\link{acc_dg1}}, \code{\link{acc_dg2}}
 #'
 #' @section Data set:
 #' \code{\link{cad_pvb}}

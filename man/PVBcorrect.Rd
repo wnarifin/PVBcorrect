@@ -24,7 +24,7 @@ and EM-based logistic regression method (Kosinski & Barnhart, 2003).
 
 \section{PVB correction additional functions}{
 
-\code{\link{acc_dg1}}, \code{\link{acc_dg2}}
+\code{\link{acc_bg}}, \code{\link{acc_dg1}}, \code{\link{acc_dg2}}
 }
 
 \section{Data set}{

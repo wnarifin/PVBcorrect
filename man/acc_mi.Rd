@@ -32,7 +32,7 @@ Specify as name vector, e.g. c("X1", "X2") for two or more variables. The variab
 
 \item{ci_level}{Set the CI width. The default is 0.95 i.e. 95\% CI.}
 
-\item{m}{The number of imputation, _m_.}
+\item{m}{The number of imputation, m.}
 
 \item{method}{Imputation method. The default is "logreg". Other allowed methods are
 "logreg.boot", "pmm", "midastouch", "sample", "cart", "rf".

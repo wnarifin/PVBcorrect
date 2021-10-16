@@ -99,7 +99,7 @@ em_out$boot_ci_data
 # With covariate, will take some time
 # Also check the time taken to finish
 start_time = proc.time()
-em_outx = acc_em(data = cad_pvb, test = "T", disease = "D", covariate = "X1", ci = TRUE,
+em_outx = acc_em(data = cad_pvb, test = "T", disease = "D", covariate = "X3", ci = TRUE,
                  seednum = 12345, R = 2, t_max = 10000, cutoff = 0.0005)
                  # with covariate, better set larger t_max
 elapsed_time = proc.time() - start_time; elapsed_time  # view elapsed time in seconds

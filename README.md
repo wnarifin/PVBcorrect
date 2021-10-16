@@ -19,14 +19,7 @@ install.packages("boot", "mice")
 
 ## Installation
 
-Install PVBcorrect package by running:
-
-```
-install.packages("devtools")
-devtools::install_github("wnarifin/PVBcorrect")
-```
-
-or
+Install PVBcorrect package by running
 
 ```
 install.packages("githubinstall")
@@ -45,3 +38,6 @@ This project is licensed under the GPL (>= 3) License - see the [LICENSE.md](LIC
 4. Harel, O., & Zhou, X.-H. (2006). Multiple imputation for correcting verification bias. Statistics in Medicine, 25(22), 3769–3786.
 5. He, H., & McDermott, M. P. (2012). A robust method using propensity score stratification for correcting verification bias for binary tests. Biostatistics, 13(1), 32–47.
 6. Kosinski, A. S., & Barnhart, H. X. (2003). Accounting for nonignorable verification bias in assessment of diagnostic tests. Biometrics, 59(1), 163–171.
+7. Zhou, X.-H. (1993). Maximum likelihood estimators of sensitivity and specificity corrected for verification bias. Communications in Statistics-Theory and Methods, 22(11), 3177–3198.
+8. Zhou, X.-H. (1994). Effect of verification bias on positive and negative predictive values. Statistics in Medicine, 13(17), 1737–1745.
+9. Zhou, X.-H., Obuchowski, N. A., & McClish, D. K. (2011). Statistical Methods in Diagnostic Medicine (2nd ed.). John Wiley & Sons.

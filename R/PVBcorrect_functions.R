@@ -12,16 +12,23 @@
 #' @param data A data frame, with at least "Test" and "Disease" variables.
 #' @param test The "Test" variable name, i.e. the test result. The variable must be in binary; positive = 1, negative = 0 format.
 #' @param disease The "Disease" variable name, i.e. the true disease status. The variable must be in binary; positive = 1, negative = 0 format.
-#' @param show_unverified Optional. Set to \code{TRUE} to also view observations with unverified disease status. The default is \code{FALSE}.
+#' @param show_unverified Optional. Set to \code{TRUE} to view observations with unverified disease status. The default is \code{FALSE}.
+#' @param show_total Optional. Set to \code{TRUE} to view total by test result. The default is \code{FALSE}.
 #' @return A cross-clasification table.
 #' @examples
 #' str(cad_pvb)  # built-in data
 #'
 #' view_table(data = cad_pvb, test = "T", disease = "D")  # without unverified observations
+#' view_table(data = cad_pvb, test = "T", disease = "D", show_total = TRUE)
+#'   # also with total observations by test result
+#'
 #' view_table(data = cad_pvb, test = "T", disease = "D", show_unverified = TRUE)
 #'   # with unverified observations
+#' view_table(data = cad_pvb, test = "T", disease = "D", show_unverified = TRUE,
+#'            show_total = TRUE)  # also with total observations by test result
+#' @importFrom stats addmargins
 #' @export
-view_table = function(data, test, disease, show_unverified = FALSE) {
+view_table = function(data, test, disease, show_unverified = FALSE, show_total = FALSE) {
   # assign variables
   test = data[, test]
   disease = data[, disease]
@@ -34,6 +41,11 @@ view_table = function(data, test, disease, show_unverified = FALSE) {
   } else if (show_unverified == FALSE) {
     tbl = table(Test = 2 - test, Disease = 2 - disease)  # rearrange for epidemiology view
     rownames(tbl) = colnames(tbl) = c("yes","no")
+  }
+
+  if (show_total == TRUE) {
+    tbl = addmargins(tbl)[-3, ]
+    colnames(tbl)[ncol(tbl)] = "Total"
   }
 
   return(tbl)
@@ -58,8 +70,8 @@ view_table = function(data, test, disease, show_unverified = FALSE) {
 #' @importFrom stats qnorm
 #' @export
 acc_cca = function(data, test, disease,
-                        ci = FALSE, ci_level = .95,
-                        description = TRUE) {
+                   ci = FALSE, ci_level = .95,
+                   description = TRUE) {
   # assign variables
   test = data[, test]
   disease = data[, disease]
@@ -69,7 +81,7 @@ acc_cca = function(data, test, disease,
   ci_values = matrix(rep(NA, 4*2), nrow = 4, ncol = 2)
 
   # setup table
-  tbl = table(test, disease)
+  tbl = table(test, disease)  # imp! do not change to view_table here, acc_mi will break
 
   # get measures from table
   acc_values[1] = tbl[2, 2] / sum(tbl[, 2])  # Sn
@@ -145,17 +157,15 @@ acc_cca = function(data, test, disease,
 #'   \item{He, H., & McDermott, M. P. (2012). A robust method using propensity score stratification for correcting verification bias for binary tests. Biostatistics, 13(1), 32–47.}
 #' }
 #' @examples
-#' data = cad_pvb  # built-in data
-#'
 #' # point estimates
-#' acc_ebg(data, test = "T", disease = "D")
-#' acc_ebg(data, test = "T", disease = "D", covariate = "X1")
-#' acc_ebg(data, test = "T", disease = "D", covariate = "X1", saturated_model = TRUE)
+#' acc_ebg(data = cad_pvb, test = "T", disease = "D")
+#' acc_ebg(data = cad_pvb, test = "T", disease = "D", covariate = "X3")
+#' acc_ebg(data = cad_pvb, test = "T", disease = "D", covariate = "X3", saturated_model = TRUE)
 #'
 #' # with bootstrapped confidence interval
-#' acc_ebg(data, test = "T", disease = "D", ci = TRUE, seednum = 12345)
-#' acc_ebg(data, test = "T", disease = "D", covariate = "X1", ci = TRUE, seednum = 12345)
-#' acc_ebg(data, test = "T", disease = "D", covariate = "X1", saturated_model = TRUE,
+#' acc_ebg(data = cad_pvb, test = "T", disease = "D", ci = TRUE, seednum = 12345)
+#' acc_ebg(data = cad_pvb, test = "T", disease = "D", covariate = "X3", ci = TRUE, seednum = 12345)
+#' acc_ebg(data = cad_pvb, test = "T", disease = "D", covariate = "X3", saturated_model = TRUE,
 #'         ci = TRUE, seednum = 12345)
 #' @export
 acc_ebg = function(data, test, disease, covariate = NULL, saturated_model = FALSE,
@@ -175,6 +185,91 @@ acc_ebg = function(data, test, disease, covariate = NULL, saturated_model = FALS
                     ci_level = ci_level, ci_type = ci_type,
                     R = R, seednum = seednum, r_print_freq = r_print_freq)
   }
+}
+
+#' PVB correction by Begg and Greenes' method with asymptotic normal CI
+#'
+#' @description PVB correction by Begg and Greenes' method with asymptotic normal CI. This is limited to no covariate.
+#' @inheritParams acc_ebg
+#' @param ci View confidence interval (CI). The default is \code{FALSE}.
+#' @return A list object containing:
+#' \describe{
+#'   \item{acc_results}{The accuracy results.}
+#' }
+#' @references
+#' \enumerate{
+#'   \item{Begg, C. B., & Greenes, R. A. (1983). Assessment of diagnostic tests when disease verification is subject to selection bias. Biometrics, 207–215.}
+#'   \item{Harel, O., & Zhou, X.-H. (2006). Multiple imputation for correcting verification bias. Statistics in Medicine, 25(22), 3769–3786.}
+#'   \item{Zhou, X.-H. (1993). Maximum likelihood estimators of sensitivity and specificity corrected for verification bias. Communications in Statistics-Theory and Methods, 22(11), 3177–3198.}
+#'   \item{Zhou, X.-H. (1994). Effect of verification bias on positive and negative predictive values. Statistics in Medicine, 13(17), 1737–1745.}
+#'   \item{Zhou, X.-H., Obuchowski, N. A., & McClish, D. K. (2011). Statistical Methods in Diagnostic Medicine (2nd ed.). John Wiley & Sons.}
+#'
+#' }
+#' @examples
+#' acc_bg(data = cad_pvb, test = "T", disease = "D")  # equivalent to result by acc_ebg()
+#' acc_bg(data = cad_pvb, test = "T", disease = "D", ci = TRUE)
+#'   # the CIs are slightly differerent from result by acc_ebg()
+#' @importFrom stats addmargins
+#' @importFrom stats qnorm
+#' @export
+acc_bg = function(data, test, disease,
+                  ci = FALSE, ci_level = .95,
+                  description = TRUE) {
+
+  # setup empty vector
+  acc_values = acc_vars = acc_ses = rep(NA, 4)
+  ci_values = matrix(rep(NA, 4*2), nrow = 4, ncol = 2)
+
+  # setup table
+  tbl = view_table(data, test, disease, show_unverified = TRUE)
+  tbl = addmargins(tbl)
+
+  # get measures from table
+  s1 = tbl[1, 1]; s0 = tbl[2, 1]
+  r1 = tbl[1, 2]; r0 = tbl[2, 2]
+  n1 = tbl[1, 4]; n0 = tbl[2, 4]; n = tbl[3, 4]
+
+  acc_values[1] = n1*s1/(s1+r1) / (n1*s1/(s1+r1) + n0*s0/(s0+r0))  # Sn
+  acc_values[2] = n0*r0/(s0+r0) / (n1*r1/(s1+r1) + n0*r0/(s0+r0))  # Sp
+  acc_values[3] = s1 / (s1 + r1)  # PPV
+  acc_values[4] = r0 / (s0 + r0)  # NPV
+  acc_values
+
+  # only calculate when ci is requested
+  if (ci == TRUE) {
+    # get variances, var formula ref: Zhou (1994)
+    acc_vars[1] = (acc_values[1]*(1-acc_values[1]))^2 * (n/(n0*n1) + r1/(s1*(s1+r1)) + r0/(s0*(s0+r0)))  # Var Sn
+    acc_vars[2] = (acc_values[2]*(1-acc_values[2]))^2 * (n/(n0*n1) + s1/(r1*(s1+r1)) + s0/(r0*(s0+r0)))  # Var Sp
+    acc_vars[3] = s1*r1 / (s1+r1)^3  # Var PPV
+    acc_vars[4] = s0*r0 / (s0+r0)^3  # Var NPV
+
+    # calculate SEs
+    acc_ses = sqrt(acc_vars)
+
+    # ci, default 95% ci
+    for (i in 1:4) {
+      ci_values[i, ] = acc_values[i] + c(-1, 1) * qnorm(1 - (1 - ci_level)/2) * acc_ses[i]
+    }
+  }
+
+  # output
+  df = data.frame(Est = acc_values,
+                  row.names = c("Sn", "Sp", "PPV", "NPV"))
+  # when ci is requested
+  if (ci == TRUE) {
+    df_ci = data.frame(SE = acc_ses, LowCI = ci_values[, 1], UppCI = ci_values[, 2])
+    df = cbind(df, df_ci)
+  }
+  # when ci not requested
+  else {
+    df = df
+  }
+  # allows turning method description off for iterative procedure, e.g. MI
+  if (description == TRUE) {
+    cat("Estimates of accuracy measures\nCorrected for PVB: Extended Begg and Greenes' Method\n\n")
+  }
+  acc_bg_list = list(acc_results = df)
+  return(acc_bg_list)
 }
 
 #' PVB correction by Begg and Greenes' method 1 (deGroot et al, no covariate)
@@ -227,7 +322,7 @@ acc_dg1 = function(data, test, disease, description = TRUE) {
 #'   \item{de Groot, J. A. H., Janssen, K. J. M., Zwinderman, A. H., Bossuyt, P. M. M., Reitsma, J. B., & Moons, K. G. M. (2011). Correcting for partial verification bias: a comparison of methods. Annals of Epidemiology, 21(2), 139–148.}
 #' }
 #' @examples
-#' acc_dg2(data = cad_pvb, test = "T", disease = "D", covariate = "X1")
+#' acc_dg2(data = cad_pvb, test = "T", disease = "D", covariate = "X3")
 #'   # equivalent to acc_ebg(), saturated_model
 #' @export
 acc_dg2 = function(data, test, disease, covariate, description = TRUE) {
@@ -272,7 +367,7 @@ acc_dg2 = function(data, test, disease, covariate, description = TRUE) {
 #'
 #' @description Perform PVB correction by multiple imputation.
 #' @inheritParams acc_ebg
-#' @param m The number of imputation, _m_.
+#' @param m The number of imputation, m.
 #' @param method Imputation method. The default is "logreg". Other allowed methods are
 #'   "logreg.boot", "pmm", "midastouch", "sample", "cart", "rf".
 #'   See \code{\link[mice]{mice}} for details of these methods.

@@ -4,7 +4,7 @@
 \alias{view_table}
 \title{Test vs Disease/Gold Standard cross-classification table}
 \usage{
-view_table(data, test, disease, show_unverified = FALSE)
+view_table(data, test, disease, show_unverified = FALSE, show_total = FALSE)
 }
 \arguments{
 \item{data}{A data frame, with at least "Test" and "Disease" variables.}
@@ -13,7 +13,9 @@ view_table(data, test, disease, show_unverified = FALSE)
 
 \item{disease}{The "Disease" variable name, i.e. the true disease status. The variable must be in binary; positive = 1, negative = 0 format.}
 
-\item{show_unverified}{Optional. Set to \code{TRUE} to also view observations with unverified disease status. The default is \code{FALSE}.}
+\item{show_unverified}{Optional. Set to \code{TRUE} to view observations with unverified disease status. The default is \code{FALSE}.}
+
+\item{show_total}{Optional. Set to \code{TRUE} to view total by test result. The default is \code{FALSE}.}
 }
 \value{
 A cross-clasification table.
@@ -25,6 +27,11 @@ View Test vs Disease/Gold Standard cross-classification table.
 str(cad_pvb)  # built-in data
 
 view_table(data = cad_pvb, test = "T", disease = "D")  # without unverified observations
+view_table(data = cad_pvb, test = "T", disease = "D", show_total = TRUE)
+  # also with total observations by test result
+
 view_table(data = cad_pvb, test = "T", disease = "D", show_unverified = TRUE)
   # with unverified observations
+view_table(data = cad_pvb, test = "T", disease = "D", show_unverified = TRUE,
+           show_total = TRUE)  # also with total observations by test result
 }

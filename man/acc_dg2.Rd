@@ -26,7 +26,7 @@ Perform PVB correction by Begg and Greenes' method 2 as described in deGroot et 
   in which it also includes PPV and NPV calculation. This is limited to only one covariate.
 }
 \examples{
-acc_dg2(data = cad_pvb, test = "T", disease = "D", covariate = "X1")
+acc_dg2(data = cad_pvb, test = "T", disease = "D", covariate = "X3")
   # equivalent to acc_ebg(), saturated_model
 }
 \references{
