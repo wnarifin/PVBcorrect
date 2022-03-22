@@ -282,10 +282,12 @@ acc_em_point = function(data, test, disease, covariate = NULL, mnar = TRUE,
   acc_values = rep(NA, 4)
   # basic, no covariate, faster
   if (is.null(covariate)) {
+    data_1 = data.frame(1); colnames(data_1) = disease
+    data_0 = data.frame(0); colnames(data_0) = disease
     # P(T=1|D=1)
-    acc_values[1] = predict(em_out$model_b, data.frame(D=1), type="response")
+    acc_values[1] = predict(em_out$model_b, data_1, type="response")
     # P(T=0|D=0)
-    acc_values[2] = 1 - predict(em_out$model_b, data.frame(D=0), type="response")
+    acc_values[2] = 1 - predict(em_out$model_b, data_0, type="response")
     # PPV, P(D=1|T=1)
     acc_values[3] = (predict(em_out$model_a, data.frame(1), type="response") * acc_values[1]) /
       (predict(em_out$model_a, data.frame(1), type="response") * acc_values[1] + (1 - predict(em_out$model_a, data.frame(1), type="response")) * (1 - acc_values[2]))

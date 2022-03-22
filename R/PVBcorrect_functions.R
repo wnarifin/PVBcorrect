@@ -36,8 +36,11 @@ view_table = function(data, test, disease, show_unverified = FALSE, show_total =
   # option: show verified/not
   if (show_unverified == TRUE) {
     tbl = table(Test = 2 - test, Disease = 2 - disease, useNA = "ifany")  # rearrange for epidemiology view
-    rownames(tbl) = c("yes","no")
-    colnames(tbl) = c("yes","no","unverified")
+    if (ncol(tbl) < 3) {
+      tbl = cbind(tbl, na = c(0, 0))
+    }  # whenever there are no missing disease status
+    dimnames(tbl) = list(Test = c("yes","no"),
+                         Disease = c("yes","no","unverified"))
   } else if (show_unverified == FALSE) {
     tbl = table(Test = 2 - test, Disease = 2 - disease)  # rearrange for epidemiology view
     rownames(tbl) = colnames(tbl) = c("yes","no")
