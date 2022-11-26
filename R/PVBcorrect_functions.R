@@ -269,7 +269,7 @@ acc_bg = function(data, test, disease,
   }
   # allows turning method description off for iterative procedure, e.g. MI
   if (description == TRUE) {
-    cat("Estimates of accuracy measures\nCorrected for PVB: Extended Begg and Greenes' Method\n\n")
+    cat("Estimates of accuracy measures\nCorrected for PVB: Begg and Greenes' Method\n\n")
   }
   acc_bg_list = list(acc_results = df)
   return(acc_bg_list)
