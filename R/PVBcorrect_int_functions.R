@@ -7,6 +7,26 @@
 # to be called by PVBcorrect_functions.R
 # ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+# Basic internal functions ====
+# use by some functions
+snsp = function(data, test, disease) {
+  snsp_values = c(0, 0)
+  tbl = table(data[, test], data[, disease])
+  snsp_values[1] = tbl[2,2]/sum(tbl[,2])  # Sn
+  snsp_values[2] = tbl[1,1]/sum(tbl[,1])  # Sp
+  return(snsp_values)
+}
+
+acc = function(data, test, disease) {
+  acc_values = c(0, 0, 0, 0)
+  tbl = table(data[, test], data[, disease])
+  acc_values[1] = tbl[2,2]/sum(tbl[,2])  # Sn
+  acc_values[2] = tbl[1,1]/sum(tbl[,1])  # Sp
+  acc_values[3] = tbl[2,2]/sum(tbl[2,])  # PPV
+  acc_values[4] = tbl[1,1]/sum(tbl[1,])  # PPV
+  return(acc_values)
+}
+
 # EBG ====
 # Begg & Greenes, 1983; Alonzo, 2005; He & McDermott, 2012
 
