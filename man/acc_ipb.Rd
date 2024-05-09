@@ -13,11 +13,12 @@ acc_ipb(
   interaction = FALSE,
   ci = FALSE,
   ci_level = 0.95,
-  ci_percentile = FALSE,
+  ci_perc = FALSE,
   b = 1000,
   seednum = NULL,
   return_data = FALSE,
-  return_detail = FALSE
+  return_detail = FALSE,
+  description = TRUE
 )
 }
 \arguments{
@@ -30,6 +31,9 @@ acc_ipb(
 \item{covariate}{The name(s) of covariate(s), i.e. other variables associated with either test or disease status.
 Specify as name vector, e.g. c("X1", "X2") for two or more variables. The variables must be in formats acceptable to GLM.}
 
+\item{option}{1 = IPW weight, 2 = W_h weight, described in Arifin (2023), modified weight of Krautenbacher (2017).
+The default is \code{option = 1}. For small weights, \code{option = 2} is more stable (Arifin, 2023).}
+
 \item{interaction}{Allow interaction terms between covariates in propensity score calculation.
 The default is \code{FALSE}.}
 
@@ -37,16 +41,18 @@ The default is \code{FALSE}.}
 
 \item{ci_level}{Set the CI width. The default is 0.95 i.e. 95\% CI.}
 
-\item{ci_percentile}{Calculate CI by percentile method. The default is \code{FALSE}.}
-
 \item{b}{The number of bootstrap samples, b.}
 
 \item{seednum}{Set the seed number for the bootstrapped CI. The default is not set, so it depends on the user
 to set it outside or inside the function.}
 
-\item{return_data}{Return bootstrapped sample data.}
+\item{return_data}{Return data for the bootstrapped samples.}
 
-\item{return_detail}{Return accuracy measures for the bootstrapped samples.}
+\item{return_detail}{Return accuracy measures for each of the bootstrapped samples.}
+
+\item{description}{Print the name of this analysis. The default is \code{TRUE}. This can be turned off for repeated analysis, for example in bootstrapped results.}
+
+\item{ci_percentile}{Calculate CI by percentile method. The default is normal distribution method (\code{FALSE}).}
 }
 \value{
 A list object containing:
@@ -68,6 +74,8 @@ acc_ipb(data = cad_pvb, test = "T", disease = "D", covariate = c("X1","X2","X3")
 \references{
 \enumerate{
   \item{Arifin, W. N., & Yusof, U. K. (2022). Partial Verification Bias Correction Using Inverse Probability Bootstrap Sampling for Binary Diagnostic Tests. Diagnostics, 12(11), 2839.}
+  \item{Arifin, W. N. (2023). Partial verification bias correction in diagnostic accuracy studies using propensity score-based methods (PhD thesis, Universiti Sains Malaysia). https://erepo.usm.my/handle/123456789/19184}
+  \item{Krautenbacher, N., Theis, F. J., & Fuchs, C. (2017). Correcting Classifiers for Sample Selection Bias in Two-Phase Case-Control Studies. Computational and Mathematical Methods in Medicine, 2017, 1–18. https://doi.org/10.1155/2017/7847531}
   \item{Nahorniak, M., Larsen, D. P., Volk, C., & Jordan, C. E. (2015). Using inverse probability bootstrap sampling to eliminate sample induced bias in model based analysis of unequal probability samples. PLoS One, 10(6), e0131765.}
 }
 }

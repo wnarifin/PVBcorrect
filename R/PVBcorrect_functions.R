@@ -372,11 +372,13 @@ acc_dg2 = function(data, test, disease, covariate, description = TRUE) {
 #' @description Perform PVB correction by inverse probability bootstrap sampling.
 #' @inheritParams acc_ebg
 #' @param b The number of bootstrap samples, b.
+#' @param option 1 = IPW weight, 2 = W_h weight, described in Arifin (2023), modified weight of Krautenbacher (2017).
+#'   The default is \code{option = 1}. For small weights, \code{option = 2} is more stable (Arifin, 2023).
 #' @param interaction Allow interaction terms between covariates in propensity score calculation.
 #'   The default is \code{FALSE}.
-#' @param ci_percentile Calculate CI by percentile method. The default is \code{FALSE}.
-#' @param return_data Return bootstrapped sample data.
-#' @param return_detail Return accuracy measures for the bootstrapped samples.
+#' @param ci_percentile Calculate CI by percentile method. The default is normal distribution method (\code{FALSE}).
+#' @param return_data Return data for the bootstrapped samples.
+#' @param return_detail Return accuracy measures for each of the bootstrapped samples.
 #' @return A list object containing:
 #' \describe{
 #'   \item{acc_results}{The accuracy results.}
@@ -384,6 +386,8 @@ acc_dg2 = function(data, test, disease, covariate, description = TRUE) {
 #' @references
 #' \enumerate{
 #'   \item{Arifin, W. N., & Yusof, U. K. (2022). Partial Verification Bias Correction Using Inverse Probability Bootstrap Sampling for Binary Diagnostic Tests. Diagnostics, 12(11), 2839.}
+#'   \item{Arifin, W. N. (2023). Partial verification bias correction in diagnostic accuracy studies using propensity score-based methods (PhD thesis, Universiti Sains Malaysia). https://erepo.usm.my/handle/123456789/19184}
+#'   \item{Krautenbacher, N., Theis, F. J., & Fuchs, C. (2017). Correcting Classifiers for Sample Selection Bias in Two-Phase Case-Control Studies. Computational and Mathematical Methods in Medicine, 2017, 1–18. https://doi.org/10.1155/2017/7847531}
 #'   \item{Nahorniak, M., Larsen, D. P., Volk, C., & Jordan, C. E. (2015). Using inverse probability bootstrap sampling to eliminate sample induced bias in model based analysis of unequal probability samples. PLoS One, 10(6), e0131765.}
 #' }
 #' @examples
@@ -395,8 +399,9 @@ acc_dg2 = function(data, test, disease, covariate, description = TRUE) {
 #'         b = 1000, seednum = 12345)
 #' @export
 acc_ipb = function(data, test, disease, covariate = NULL, option = 1, interaction = FALSE,
-                   ci = FALSE, ci_level = .95, ci_percentile = FALSE,
-                   b = 1000, seednum = NULL, return_data = FALSE, return_detail = FALSE) {
+                   ci = FALSE, ci_level = .95, ci_perc = FALSE,
+                   b = 1000, seednum = NULL, return_data = FALSE, return_detail = FALSE,
+                   description = TRUE) {
   # data = original data
   # add verification status
   data$verified = 1  # verified: 1 = yes, 0 = no
@@ -466,41 +471,41 @@ acc_ipb = function(data, test, disease, covariate = NULL, option = 1, interactio
 
   acc_values = apply(acc_resample_list, 2, mean)
   acc_ses = apply(acc_resample_list, 2, sd)
-  z = qnorm((1 - (1 - ci_level)/2))
-  acc_ll = acc_values - z * acc_ses
-  acc_ul = acc_values + z * acc_ses
-  acc_ci = cbind(acc_values, acc_ses, acc_ll, acc_ul)
-  dimnames(acc_ci) = list(c("Sn", "Sp", "PPV", "NPV"), c("Est", "SE", "LowCI", "UppCI"))
 
-  sn_percentile = quantile(acc_resample_list[, 1], probs = c(0.025, 0.975))
-  sp_percentile = quantile(acc_resample_list[, 2], probs = c(0.025, 0.975))
-  ppv_percentile = quantile(acc_resample_list[, 3], probs = c(0.025, 0.975))
-  npv_percentile = quantile(acc_resample_list[, 4], probs = c(0.025, 0.975))
-  acc_ci_percentile = cbind(acc_values, acc_ses, rbind(sn_percentile, sp_percentile,
-                                                       ppv_percentile, npv_percentile))
-  dimnames(acc_ci_percentile) = list(c("Sn", "Sp", "PPV", "NPV"), c("Est", "SE", "LowCI", "UppCI"))
+  if (ci == TRUE) {
+    if (ci_perc == FALSE) {
+      z = qnorm((1 - (1 - ci_level)/2))
+      acc_ll = acc_values - z * acc_ses
+      acc_ul = acc_values + z * acc_ses
+      acc_ci = cbind(acc_values, acc_ses, acc_ll, acc_ul)
+      dimnames(acc_ci) = list(c("Sn", "Sp", "PPV", "NPV"), c("Est", "SE", "LowCI", "UppCI"))
+    } else {
+      sn_percentile = quantile(acc_resample_list[, 1], probs = c(0.025, 0.975))
+      sp_percentile = quantile(acc_resample_list[, 2], probs = c(0.025, 0.975))
+      ppv_percentile = quantile(acc_resample_list[, 3], probs = c(0.025, 0.975))
+      npv_percentile = quantile(acc_resample_list[, 4], probs = c(0.025, 0.975))
+      acc_ci = cbind(acc_values, acc_ses, rbind(sn_percentile, sp_percentile,
+                                                ppv_percentile, npv_percentile))
+      dimnames(acc_ci) = list(c("Sn", "Sp", "PPV", "NPV"), c("Est", "SE", "LowCI", "UppCI"))
+    }
+    acc_ipb_list = list(acc_results = acc_ci)
+  } else {
+    acc_point = data.frame(Est = acc_values,
+                           row.names = c("Sn", "Sp", "PPV", "NPV"))
+    acc_ipb_list = list(acc_results = acc_point)
+  }
 
   if (return_data == TRUE) {
-    return(list(data = data_resample_list, acc_results = acc_values))
+    acc_ipb_list = append(acc_ipb_list, list(data_each_sample = data_resample_list))
   }
   if (return_detail == TRUE) {
-    return(list(acc_list = acc_resample_list, SE = acc_ses, acc_results = acc_values))
+    acc_ipb_list = append(acc_ipb_list, list(acc_each_sample = acc_resample_list))
   }
-  else {
-    if (ci == FALSE) {
-      acc_point = data.frame(Est = acc_values,
-                             row.names = c("Sn", "Sp", "PPV", "NPV"))
-      return(list(acc_results = acc_point))
-    }
-    else {
-      if (ci_percentile == TRUE) {
-        return(list(acc_results = acc_ci_percentile))
-      }
-      else{
-        return(list(acc_results = acc_ci))
-      }
-    }
+
+  if (description == TRUE) {
+    cat("Estimates of accuracy measures\nCorrected for PVB: Inverse probability bootstrap sampling Method\n\n")
   }
+  return(acc_ipb_list)
 }
 
 # MI Method
