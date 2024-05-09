@@ -1,7 +1,7 @@
 Package: PVBcorrect
 Type: Package
 Title: Partial verification bias correction for estimates of accuracy measures in diagnostic accuracy studies
-Version: 0.2.1
+Version: 0.2.0
 Authors@R: 
     person(given = "Wan Nor",
            family = "Arifin",
