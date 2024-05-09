@@ -364,6 +364,145 @@ acc_dg2 = function(data, test, disease, covariate, description = TRUE) {
   return(acc_dg2)
 }
 
+# IPB method
+# Arifin & Yusof, 2022; Nahorniak et al., 2015
+# IPB sampling for PVB correction is based on general IPB by Nahorniak et al, 2015
+#' PVB correction by inverse probability bootstrap sampling (IPB)
+#'
+#' @description Perform PVB correction by inverse probability bootstrap sampling.
+#' @inheritParams acc_ebg
+#' @param b The number of bootstrap samples, b.
+#' @param interaction Allow interaction terms between covariates in propensity score calculation.
+#'   The default is \code{FALSE}.
+#' @param ci_percentile Calculate CI by percentile method. The default is \code{FALSE}.
+#' @param return_data Return bootstrapped sample data.
+#' @param return_detail Return accuracy measures for the bootstrapped samples.
+#' @return A list object containing:
+#' \describe{
+#'   \item{acc_results}{The accuracy results.}
+#' }
+#' @references
+#' \enumerate{
+#'   \item{Arifin, W. N., & Yusof, U. K. (2022). Partial Verification Bias Correction Using Inverse Probability Bootstrap Sampling for Binary Diagnostic Tests. Diagnostics, 12(11), 2839.}
+#'   \item{Nahorniak, M., Larsen, D. P., Volk, C., & Jordan, C. E. (2015). Using inverse probability bootstrap sampling to eliminate sample induced bias in model based analysis of unequal probability samples. PLoS One, 10(6), e0131765.}
+#' }
+#' @examples
+#' # no covariate
+#' acc_ipb(data = cad_pvb, test = "T", disease = "D", b = 1000, seednum = 12345)
+#'
+#' # with three covariates
+#' acc_ipb(data = cad_pvb, test = "T", disease = "D", covariate = c("X1","X2","X3"),
+#'         b = 1000, seednum = 12345)
+#' @export
+acc_ipb = function(data, test, disease, covariate = NULL, option = 1, interaction = FALSE,
+                   ci = FALSE, ci_level = .95, ci_percentile = FALSE,
+                   b = 1000, seednum = NULL, return_data = FALSE, return_detail = FALSE) {
+  # data = original data
+  # add verification status
+  data$verified = 1  # verified: 1 = yes, 0 = no
+  data[is.na(data[, disease]), "verified"] = 0
+
+  # setup empty vector
+  acc_values = rep(NA, 4)  # Sn Sp only
+
+  # gen ps/pi
+  # P(V = 1 | T = t)
+  # if no covariate
+  if (is.null(covariate)) {
+    fmula = reformulate(test, "verified")
+    fit = glm(fmula, data = data, family = "binomial")
+  }
+  # if covariate names supplied as vector, not NULL
+  else {
+    if (interaction == FALSE) {
+      fmula = reformulate(c(test, covariate), "verified")
+    } else {
+      fmula = reformulate(paste(c(test, covariate), collapse = " * "), "verified")
+    }
+    fit = glm(fmula, data = data, family = "binomial")
+  }
+  data$ps = predict(fit, type = "response")
+
+  # transform ps to weight
+  if (option == 1) {
+    # IPW weight
+    data$ps_w = ifelse(data[, "verified"] == 1, 1/data$ps, 1/(1-data$ps))
+  }
+  if (option == 2) {
+    # W_h weight, Krautenbacher 2017
+    data$ps_w = ifelse(data[, "verified"] == 1, max(unique(data$ps)) / data$ps,
+                       max(unique((1-data$ps))) / (1-data$ps))
+  }
+
+  # data1 = complete case
+  data1 = na.omit(data)
+  n_data = nrow(data1)
+  data1$p_ipb = data1$ps_w / sum(data1$ps_w)
+
+  # resample
+  data_resample_list = NULL
+  set.seed(seednum)
+  i = 1
+  while (i < b + 1) {
+    # resample
+    sampled = sample(1:n_data, n_data, TRUE, prob = data1$p_ipb)  # bootstrap w weight
+    data_resample = data1[sampled, ]
+    # exclude invalid samples: get the dimension sum, should be 4 for 2x2 epid table
+    sum_tbl = sum(dim(table(data_resample[, test], data_resample[, disease])))
+    # exclude invalid sample with sum < 4
+    if (sum_tbl < 4) {
+      # delete invalid sample
+      data_resample_list[i] = NULL
+      i = i
+    } else {
+      # save valid sample in list
+      data_resample_list[i] = list(data_resample)
+      i = i + 1
+    }
+  }
+
+  acc_resample_list = t(sapply(data_resample_list, acc,
+                               test = test, disease = disease))
+
+  acc_values = apply(acc_resample_list, 2, mean)
+  acc_ses = apply(acc_resample_list, 2, sd)
+  z = qnorm((1 - (1 - ci_level)/2))
+  acc_ll = acc_values - z * acc_ses
+  acc_ul = acc_values + z * acc_ses
+  acc_ci = cbind(acc_values, acc_ses, acc_ll, acc_ul)
+  dimnames(acc_ci) = list(c("Sn", "Sp", "PPV", "NPV"), c("Est", "SE", "LowCI", "UppCI"))
+
+  sn_percentile = quantile(acc_resample_list[, 1], probs = c(0.025, 0.975))
+  sp_percentile = quantile(acc_resample_list[, 2], probs = c(0.025, 0.975))
+  ppv_percentile = quantile(acc_resample_list[, 3], probs = c(0.025, 0.975))
+  npv_percentile = quantile(acc_resample_list[, 4], probs = c(0.025, 0.975))
+  acc_ci_percentile = cbind(acc_values, acc_ses, rbind(sn_percentile, sp_percentile,
+                                                       ppv_percentile, npv_percentile))
+  dimnames(acc_ci_percentile) = list(c("Sn", "Sp", "PPV", "NPV"), c("Est", "SE", "LowCI", "UppCI"))
+
+  if (return_data == TRUE) {
+    return(list(data = data_resample_list, acc_results = acc_values))
+  }
+  if (return_detail == TRUE) {
+    return(list(acc_list = acc_resample_list, SE = acc_ses, acc_results = acc_values))
+  }
+  else {
+    if (ci == FALSE) {
+      acc_point = data.frame(Est = acc_values,
+                             row.names = c("Sn", "Sp", "PPV", "NPV"))
+      return(list(acc_results = acc_point))
+    }
+    else {
+      if (ci_percentile == TRUE) {
+        return(list(acc_results = acc_ci_percentile))
+      }
+      else{
+        return(list(acc_results = acc_ci))
+      }
+    }
+  }
+}
+
 # MI Method
 # Harel & Zhou, 2006
 #' PVB correction by multiple imputation
