@@ -14,7 +14,7 @@
 #' @param disease The "Disease" variable name, i.e. the true disease status. The variable must be in binary; positive = 1, negative = 0 format.
 #' @param show_unverified Optional. Set to \code{TRUE} to view observations with unverified disease status. The default is \code{FALSE}.
 #' @param show_total Optional. Set to \code{TRUE} to view total by test result. The default is \code{FALSE}.
-#' @return A cross-clasification table.
+#' @return A cross-classification table.
 #' @examples
 #' str(cad_pvb)  # built-in data
 #'
@@ -172,9 +172,10 @@ acc_cca = function(data, test, disease,
 #'         ci = TRUE, seednum = 12345)
 #' @export
 acc_ebg = function(data, test, disease, covariate = NULL, saturated_model = FALSE,
-                   show_fit = FALSE, show_boot = FALSE, description = TRUE,
                    ci = FALSE, ci_level = .95, ci_type = "basic",
-                   R = 999, seednum = NULL, r_print_freq = 100) {
+                   R = 999, seednum = NULL,
+                   show_fit = FALSE, show_boot = FALSE, r_print_freq = 100,
+                   description = TRUE) {
   # w/out ci
   if (ci == FALSE) {
     acc_ebg_point(data, test, disease, covariate, saturated_model,
@@ -288,7 +289,8 @@ acc_bg = function(data, test, disease,
 #' @examples
 #' acc_dg1(data = cad_pvb, test = "T", disease = "D")  # equivalent to result by acc_ebg()
 #' @export
-acc_dg1 = function(data, test, disease, description = TRUE) {
+acc_dg1 = function(data, test, disease,
+                   description = TRUE) {
   # setup table counts
   tbl = view_table(data, test, disease, show_unverified = TRUE)
   a = tbl[1, 1]; b = tbl[1, 2]; c = tbl[2, 1]; d = tbl[2, 2]
@@ -328,7 +330,8 @@ acc_dg1 = function(data, test, disease, description = TRUE) {
 #' acc_dg2(data = cad_pvb, test = "T", disease = "D", covariate = "X3")
 #'   # equivalent to acc_ebg(), saturated_model
 #' @export
-acc_dg2 = function(data, test, disease, covariate, description = TRUE) {
+acc_dg2 = function(data, test, disease, covariate,
+                   description = TRUE) {
   # setup table counts
   tbl2 = by(data, data[, test], function(x) view_table(data = x, test = covariate, disease, show_unverified = TRUE))
   a = tbl2$`1`[1, 1]; b = tbl2$`1`[1, 2]
@@ -374,13 +377,14 @@ acc_dg2 = function(data, test, disease, covariate, description = TRUE) {
 #' @param b The number of bootstrap samples, b.
 #' @param option 1 = IPW weight, 2 = W_h weight, described in Arifin (2023), modified weight of Krautenbacher (2017).
 #'   The default is \code{option = 1}. For small weights, \code{option = 2} is more stable (Arifin, 2023).
-#' @param interaction Allow interaction terms between covariates in propensity score calculation.
-#'   The default is \code{FALSE}.
-#' @param ci_percentile Calculate CI by percentile method. The default is normal distribution method (\code{FALSE}).
+#' @param ci_type Set confidence interval (CI) type. Acceptable types are "norm", "basic", "perc", and "bca",
+#'   for bootstrapped CI.
 #' @param return_data Return data for the bootstrapped samples.
 #' @param return_detail Return accuracy measures for each of the bootstrapped samples.
 #' @return A list object containing:
 #' \describe{
+#'   \item{data_each_sample}{Raw data for each bootstrap sample, available with \code{return_data = TRUE}}
+#'   \item{acc_each_sample}{Accuracy results for each bootstrap sample, available with \code{return_detail = TRUE}}
 #'   \item{acc_results}{The accuracy results.}
 #' }
 #' @references
@@ -397,10 +401,14 @@ acc_dg2 = function(data, test, disease, covariate, description = TRUE) {
 #' # with three covariates
 #' acc_ipb(data = cad_pvb, test = "T", disease = "D", covariate = c("X1","X2","X3"),
 #'         b = 1000, seednum = 12345)
+#'
+#' # with confidence interval
+#' acc_ipb(data = cad_pvb, test = "T", disease = "D", ci = TRUE, b = 1000, seednum = 12345)
 #' @export
-acc_ipb = function(data, test, disease, covariate = NULL, option = 1, interaction = FALSE,
-                   ci = FALSE, ci_level = .95, ci_perc = FALSE,
-                   b = 1000, seednum = NULL, return_data = FALSE, return_detail = FALSE,
+acc_ipb = function(data, test, disease, covariate = NULL, saturated_model = FALSE, option = 2,
+                   ci = FALSE, ci_level = .95, ci_type = "norm",
+                   b = 1000, seednum = NULL,
+                   return_data = FALSE, return_detail = FALSE,
                    description = TRUE) {
   # data = original data
   # add verification status
@@ -419,7 +427,7 @@ acc_ipb = function(data, test, disease, covariate = NULL, option = 1, interactio
   }
   # if covariate names supplied as vector, not NULL
   else {
-    if (interaction == FALSE) {
+    if (saturated_model == FALSE) {
       fmula = reformulate(c(test, covariate), "verified")
     } else {
       fmula = reformulate(paste(c(test, covariate), collapse = " * "), "verified")
@@ -472,14 +480,27 @@ acc_ipb = function(data, test, disease, covariate = NULL, option = 1, interactio
   acc_values = apply(acc_resample_list, 2, mean)
   acc_ses = apply(acc_resample_list, 2, sd)
 
+  # check ci_type, allowed "norm", "perc"
+  ci_type_allowed = c("norm", "perc")
+  # only 1 argument allowed
+  if (length(ci_type) > 1) {
+    stop("Invalid 'ci_type' argument.")
+  }
+  # if argument == 1, but type invalid
+  else {
+    if(!any(ci_type == ci_type_allowed)) {
+      stop("Invalid 'ci_type' argument.")
+    }
+  }
+
   if (ci == TRUE) {
-    if (ci_perc == FALSE) {
+    if (ci_type == "norm") {
       z = qnorm((1 - (1 - ci_level)/2))
       acc_ll = acc_values - z * acc_ses
       acc_ul = acc_values + z * acc_ses
       acc_ci = cbind(acc_values, acc_ses, acc_ll, acc_ul)
       dimnames(acc_ci) = list(c("Sn", "Sp", "PPV", "NPV"), c("Est", "SE", "LowCI", "UppCI"))
-    } else {
+    } else { # perc
       sn_percentile = quantile(acc_resample_list[, 1], probs = c(0.025, 0.975))
       sp_percentile = quantile(acc_resample_list[, 2], probs = c(0.025, 0.975))
       ppv_percentile = quantile(acc_resample_list[, 3], probs = c(0.025, 0.975))
@@ -495,17 +516,142 @@ acc_ipb = function(data, test, disease, covariate = NULL, option = 1, interactio
     acc_ipb_list = list(acc_results = acc_point)
   }
 
+  # output
+  if (description == TRUE) {
+    cat("Estimates of accuracy measures\nCorrected for PVB: Inverse probability bootstrap sampling Method\n\n")
+  }
   if (return_data == TRUE) {
     acc_ipb_list = append(acc_ipb_list, list(data_each_sample = data_resample_list))
   }
   if (return_detail == TRUE) {
     acc_ipb_list = append(acc_ipb_list, list(acc_each_sample = acc_resample_list))
   }
-
-  if (description == TRUE) {
-    cat("Estimates of accuracy measures\nCorrected for PVB: Inverse probability bootstrap sampling Method\n\n")
-  }
   return(acc_ipb_list)
+}
+
+# SIPW method
+# Arifin, 2023, 2025
+# SIPW is an extension of IPB method for PVB correction
+#' PVB correction by scaled inverse probability weighted resampling (SIPW)
+#'
+#' @description Perform PVB correction by scaled inverse probability weighted resampling.
+#' @inheritParams acc_ebg
+#' @param b The number of repeated samples, b.
+#' @param option 1 = IPW weight, 2 = W_h weight, described in Arifin (2023), modified weight of Krautenbacher (2017).
+#'   The default is \code{option = 2}, which is more stable for small weights (Arifin, 2023).
+#' @param return_data Return data for the bootstrapped samples.
+#' @param return_detail Return accuracy measures for each of the bootstrapped samples.
+#' @return A list object containing:
+#' \describe{
+#'   \item{acc_results}{The accuracy results.}
+#' }
+#' @references
+#' \enumerate{
+#'   \item{Arifin, W. N., & Yusof, U. K. (2025). Partial Verification Bias Correction Using Scaled Inverse Probability Resampling for Binary Diagnostic Tests. medRxiv. https://doi.org/10.1101/2025.03.09.25323631}
+#'   \item{Arifin, W. N., & Yusof, U. K. (2022). Partial Verification Bias Correction Using Inverse Probability Bootstrap Sampling for Binary Diagnostic Tests. Diagnostics, 12(11), 2839.}
+#'   \item{Arifin, W. N. (2023). Partial verification bias correction in diagnostic accuracy studies using propensity score-based methods (PhD thesis, Universiti Sains Malaysia). https://erepo.usm.my/handle/123456789/19184}
+#'   \item{Krautenbacher, N., Theis, F. J., & Fuchs, C. (2017). Correcting Classifiers for Sample Selection Bias in Two-Phase Case-Control Studies. Computational and Mathematical Methods in Medicine, 2017, 1–18. https://doi.org/10.1155/2017/7847531}
+#'   \item{Nahorniak, M., Larsen, D. P., Volk, C., & Jordan, C. E. (2015). Using inverse probability bootstrap sampling to eliminate sample induced bias in model based analysis of unequal probability samples. PLoS One, 10(6), e0131765.}
+#' }
+#' @examples
+#' # point estimates
+#' acc_sipw(data = cad_pvb, test = "T", disease = "D", b = 100, seednum = 12345)
+#' acc_sipw(data = cad_pvb, test = "T", disease = "D", covariate = c("X1","X2","X3"),
+#'          b = 100, seednum = 12345)
+#'
+#' # with bootstrapped confidence interval
+#' acc_sipw(data = cad_pvb, test = "T", disease = "D", ci = TRUE, ci_type = "perc",
+#'          b = 100, R = 9, seednum = 12345)
+#' @export
+acc_sipw = function(data, test, disease, covariate = NULL, saturated_model = FALSE, option = 2,
+                    ci = FALSE, ci_level = .95, ci_type = "basic",
+                    b = 1000, R = 999, seednum = NULL,
+                    return_data = FALSE, return_detail = FALSE,
+                    #show_boot = FALSE, r_print_freq = 100, # disabled for now
+                    description = TRUE) {
+  # w/out ci
+  if (ci == FALSE) {
+    acc_sipw_point(data, test, disease, covariate, saturated_model,
+                   option = option,
+                   #show_boot = FALSE, # disabled for now
+                   b = b, seednum = seednum, return_data = return_data,
+                   description = description)
+  }
+
+  # w ci
+  else {
+    acc_sipw_boot_ci(data, test, disease, covariate, saturated_model,
+                     option = option,
+                     #show_boot = show_boot, r_print_freq = r_print_freq, # disabled for now
+                     ci_level = ci_level, ci_type = ci_type,
+                     R = R, b = b, seednum = seednum,
+                     description = description)
+  }
+}
+
+# SIPW-B method
+# Arifin, 2023, 2025
+# SIPW-B is an extension of IPB method for PVB correction with balanced grouping
+#' PVB correction by scaled inverse probability weighted balanced resampling (SIPW-B). SIPW-B only gives results
+#' for Sensitivity and Specificity, for PPV and NPV please use SIPW instead.
+#'
+#' @description Perform PVB correction by scaled inverse probability weighted balanced resampling.
+#' @inheritParams acc_ebg
+#' @param b The number of repeated samples, b.
+#' @param option 1 = IPW weight, 2 = W_h weight, described in Arifin (2023), modified weight of Krautenbacher (2017).
+#'   The default is \code{option = 2}, which is more stable for small weights (Arifin, 2023).
+#' @param rel_size ratio control:case, D=0:D=1. The default is 1.
+#' @param return_data Return data for the bootstrapped samples.
+#' @param return_detail Return accuracy measures for each of the bootstrapped samples.
+#' @return A list object containing:
+#' \describe{
+#'   \item{acc_results}{The accuracy results.}
+#' }
+#' @references
+#' \enumerate{
+#'   \item{Arifin, W. N., & Yusof, U. K. (2025). Partial Verification Bias Correction Using Scaled Inverse Probability Resampling for Binary Diagnostic Tests. medRxiv. https://doi.org/10.1101/2025.03.09.25323631}
+#'   \item{Arifin, W. N., & Yusof, U. K. (2022). Partial Verification Bias Correction Using Inverse Probability Bootstrap Sampling for Binary Diagnostic Tests. Diagnostics, 12(11), 2839.}
+#'   \item{Arifin, W. N. (2023). Partial verification bias correction in diagnostic accuracy studies using propensity score-based methods (PhD thesis, Universiti Sains Malaysia). https://erepo.usm.my/handle/123456789/19184}
+#'   \item{Krautenbacher, N., Theis, F. J., & Fuchs, C. (2017). Correcting Classifiers for Sample Selection Bias in Two-Phase Case-Control Studies. Computational and Mathematical Methods in Medicine, 2017, 1–18. https://doi.org/10.1155/2017/7847531}
+#'   \item{Nahorniak, M., Larsen, D. P., Volk, C., & Jordan, C. E. (2015). Using inverse probability bootstrap sampling to eliminate sample induced bias in model based analysis of unequal probability samples. PLoS One, 10(6), e0131765.}
+#' }
+#' @examples
+#' # point estimates
+#' acc_sipwb(data = cad_pvb, test = "T", disease = "D", b = 100, seednum = 12345)
+#' acc_sipwb(data = cad_pvb, test = "T", disease = "D", covariate = c("X1","X2","X3"),
+#'          b = 100, seednum = 12345)
+#'
+#' # with bootstrapped confidence interval
+#' acc_sipwb(data = cad_pvb, test = "T", disease = "D", ci = TRUE, ci_type = "perc",
+#'          b = 100, R = 9, seednum = 12345)
+#' @export
+acc_sipwb = function(data, test, disease, covariate = NULL, saturated_model = FALSE, option = 2,
+                     rel_size = 1, # ratio control:case, D=0:D=1
+                     ci = FALSE, ci_level = .95, ci_type = "basic",
+                     b = 1000, R = 999, seednum = NULL,
+                     return_data = FALSE, return_detail = FALSE,
+                     #show_boot = FALSE, r_print_freq = 100, # disabled for now
+                     description = TRUE) {
+  # w/out ci
+  if (ci == FALSE) {
+    acc_sipwb_point(data, test, disease, covariate, saturated_model,
+                    option = option,
+                    rel_size = rel_size, # ratio control:case, D=0:D=1
+                    #show_boot = FALSE, # disabled for now
+                    b = b, seednum = seednum, return_data = return_data,
+                    description = description)
+  }
+
+  # w ci
+  else {
+    acc_sipwb_boot_ci(data, test, disease, covariate, saturated_model,
+                      option = option,
+                      rel_size = rel_size, # ratio control:case, D=0:D=1
+                      #show_boot = show_boot, r_print_freq = r_print_freq, # disabled for now
+                      ci_level = ci_level, ci_type = ci_type,
+                      R = R, b = b, seednum = seednum,
+                      description = description)
+  }
 }
 
 # MI Method
@@ -543,8 +689,10 @@ acc_ipb = function(data, test, disease, covariate = NULL, option = 1, interactio
 #' @export
 acc_mi = function(data, test, disease, covariate = NULL,
                   ci = FALSE, ci_level = .95,
-                  m = 100, method = "logreg", seednum = NA,
-                  mi_print = FALSE, description = TRUE) {
+                  m = 100, seednum = NA,
+                  method = "logreg",
+                  mi_print = FALSE,
+                  description = TRUE) {
   # check method
   method_allowed = c("logreg", "logreg.boot", "pmm", "midastouch", "sample", "cart", "rf")
   # only 1 argument allowed
@@ -650,12 +798,11 @@ acc_mi = function(data, test, disease, covariate = NULL,
 #' @example long_example/acc_em_ex.R
 #' @export
 acc_em = function(data, test, disease, covariate = NULL, mnar = TRUE,
-                  description = TRUE,
-                  show_t = TRUE, t_max = 500, cutoff = 0.0001,
                   ci = FALSE, ci_level = .95, ci_type = "basic",
                   R = 999, seednum = NULL,
-                  t_print_freq = 100, return_t = FALSE,
-                  r_print_freq = 100) {
+                  show_t = TRUE, t_max = 500, cutoff = 0.0001,
+                  t_print_freq = 100, return_t = FALSE, r_print_freq = 100,
+                  description = TRUE) {
   # w/out ci
   if (ci == FALSE) {
   acc_em_point(data, test, disease, covariate, mnar,

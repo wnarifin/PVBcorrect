@@ -12,8 +12,8 @@ acc_mi(
   ci = FALSE,
   ci_level = 0.95,
   m = 100,
-  method = "logreg",
   seednum = NA,
+  method = "logreg",
   mi_print = FALSE,
   description = TRUE
 )
@@ -34,12 +34,12 @@ Specify as name vector, e.g. c("X1", "X2") for two or more variables. The variab
 
 \item{m}{The number of imputation, m.}
 
+\item{seednum}{Set the seed number for the bootstrapped CI. The default is not set, so it depends on the user
+to set it outside or inside the function.}
+
 \item{method}{Imputation method. The default is "logreg". Other allowed methods are
 "logreg.boot", "pmm", "midastouch", "sample", "cart", "rf".
 See \code{\link[mice]{mice}} for details of these methods.}
-
-\item{seednum}{Set the seed number for the bootstrapped CI. The default is not set, so it depends on the user
-to set it outside or inside the function.}
 
 \item{mi_print}{Print multiple imputation history on console.
 This is \code{\link[mice]{mice}} \code{print} option. The default is \code{FALSE}.}

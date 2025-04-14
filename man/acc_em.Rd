@@ -10,18 +10,18 @@ acc_em(
   disease,
   covariate = NULL,
   mnar = TRUE,
-  description = TRUE,
-  show_t = TRUE,
-  t_max = 500,
-  cutoff = 1e-04,
   ci = FALSE,
   ci_level = 0.95,
   ci_type = "basic",
   R = 999,
   seednum = NULL,
+  show_t = TRUE,
+  t_max = 500,
+  cutoff = 1e-04,
   t_print_freq = 100,
   return_t = FALSE,
-  r_print_freq = 100
+  r_print_freq = 100,
+  description = TRUE
 )
 }
 \arguments{
@@ -38,17 +38,6 @@ Specify as name vector, e.g. c("X1", "X2") for two or more variables. The variab
 Set this to \code{FALSE} to obtain results assuming missing at random (MAR) missing data mechanism.
 This will be equivalent to using \code{\link{acc_ebg}}.}
 
-\item{description}{Print the name of this analysis. The default is \code{TRUE}. This can be turned off for repeated analysis, for example in bootstrapped results.}
-
-\item{show_t}{Print the current EM iteration number t. The default is \code{TRUE}.}
-
-\item{t_max}{The maximum iteration number for EM. Default \code{t_max = 500}. It is recommended to increase the
-number when covariates are included.}
-
-\item{cutoff}{The cutoff value for the minimum change between iteration.
-This defines the convergence of the EM procedure. Default \code{cutoff = 0.0001}. This can be set to a larger value
-to test the procedure.}
-
 \item{ci}{View confidence interval (CI). The default is \code{FALSE}.}
 
 \item{ci_level}{Set the CI width. The default is 0.95 i.e. 95\% CI.}
@@ -61,6 +50,15 @@ for bootstrapped CI. See \code{\link[boot]{boot.ci}} for details.}
 \item{seednum}{Set the seed number for the bootstrapped CI. The default is not set, so it depends on the user
 to set it outside or inside the function.}
 
+\item{show_t}{Print the current EM iteration number t. The default is \code{TRUE}.}
+
+\item{t_max}{The maximum iteration number for EM. Default \code{t_max = 500}. It is recommended to increase the
+number when covariates are included.}
+
+\item{cutoff}{The cutoff value for the minimum change between iteration.
+This defines the convergence of the EM procedure. Default \code{cutoff = 0.0001}. This can be set to a larger value
+to test the procedure.}
+
 \item{t_print_freq}{Print the current EM iteration number t at each specified interval.
 Default \code{t_print_freq = 100}.}
 
@@ -70,6 +68,8 @@ TRUE when \code{ci = TRUE}.}
 
 \item{r_print_freq}{Print the current bootstrap sample number at each specified interval.
 Default \code{r_print_freq = 100}.}
+
+\item{description}{Print the name of this analysis. The default is \code{TRUE}. This can be turned off for repeated analysis, for example in bootstrapped results.}
 }
 \value{
 A list object containing:

@@ -18,7 +18,7 @@ view_table(data, test, disease, show_unverified = FALSE, show_total = FALSE)
 \item{show_total}{Optional. Set to \code{TRUE} to view total by test result. The default is \code{FALSE}.}
 }
 \value{
-A cross-clasification table.
+A cross-classification table.
 }
 \description{
 View Test vs Disease/Gold Standard cross-classification table.

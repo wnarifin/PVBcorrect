@@ -4,6 +4,8 @@
 #' (PVB) correction for estimates of accuracy measures in diagnostic accuracy studies.
 #' The available methods are: Begg and Greenes' method (as extended by Alonzo & Pepe, 2005),
 #' Begg and Greenes' method 1 and 2 (with PPV and NPV as extended by deGroot et al, 2011),
+#' Inverse Probability Bootstrap (IPB) sampling method (Arifin & Yusof, 2022; Nahorniak et al., 2015),
+#' Scaled Inverse Probability Resampling methods (Arifin & Yusof, 2023; Arifin & Yusof, 2025),
 #' multiple imputation method by logistic regression (Harel & Zhou, 2006),
 #' and EM-based logistic regression method (Kosinski & Barnhart, 2003).
 #'
@@ -11,7 +13,7 @@
 #' \code{\link{view_table}}
 #'
 #' @section PVB correction main functions:
-#' \code{\link{acc_cca}}, \code{\link{acc_ebg}}, \code{\link{acc_ipb}}, \code{\link{acc_mi}}, \code{\link{acc_em}}
+#' \code{\link{acc_cca}}, \code{\link{acc_ebg}}, \code{\link{acc_ipb}}, \code{\link{acc_sipw}}, \code{\link{acc_mi}}, \code{\link{acc_em}}
 #'
 #' @section PVB correction additional functions:
 #' \code{\link{acc_bg}}, \code{\link{acc_dg1}}, \code{\link{acc_dg2}}
@@ -22,6 +24,8 @@
 #' @references
 #' \enumerate{
 #'   \item{Alonzo, T. A., & Pepe, M. S. (2005). Assessing accuracy of a continuous screening test in the presence of verification bias. Journal of the Royal Statistical Society: Series C (Applied Statistics), 54(1), 173–190.}
+#'   \item{Arifin, W. N., & Yusof, U. K. (2025). Partial Verification Bias Correction Using Scaled Inverse Probability Resampling for Binary Diagnostic Tests. medRxiv. https://doi.org/10.1101/2025.03.09.25323631}
+#'   \item{Arifin, W. N., & Yusof, U. K. (2022). Partial Verification Bias Correction Using Inverse Probability Bootstrap Sampling for Binary Diagnostic Tests. Diagnostics, 12(11), 2839.}
 #'   \item{Arifin, W. N. (2023). Partial verification bias correction in diagnostic accuracy studies using propensity score-based methods (PhD thesis, Universiti Sains Malaysia). https://erepo.usm.my/handle/123456789/19184}
 #'   \item{Arifin, W. N., & Yusof, U. K. (2022). Partial Verification Bias Correction Using Inverse Probability Bootstrap Sampling for Binary Diagnostic Tests. Diagnostics, 12, 2839.}
 #'   \item{Begg, C. B., & Greenes, R. A. (1983). Assessment of diagnostic tests when disease verification is subject to selection bias. Biometrics, 207–215.}
@@ -31,7 +35,4 @@
 #'   \item{Kosinski, A. S., & Barnhart, H. X. (2003). Accounting for nonignorable verification bias in assessment of diagnostic tests. Biometrics, 59(1), 163–171.}
 #' }
 #'
-#' @docType _PACKAGE
-#' @name PVBcorrect
-NULL
-#> NULL
+"_PACKAGE"

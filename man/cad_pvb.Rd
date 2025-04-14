@@ -27,10 +27,6 @@ A data frame with 2688 rows and five variables:
 cad_pvb
 }
 \description{
-Single-photon-emission computed-tomography (SPECT) thallium is a non-invasive diagnostic test
-used to diagnose coronary artery disease (CAD). SPECT thallium test was performed on 2688 patients.
-CAD is diagnosed when stenosis exceeds 50\% of the artery, as evaluated by coronary
-angiography (gold standard). Only 471 patients underwent the coronary angiography
-for verification of the CAD status. The rest of the patients were unverified (82.5\%).
+Single-photon-emission computed-tomography (SPECT) thallium is a non-invasive diagnostic test used to diagnose coronary artery disease (CAD). SPECT thallium test was performed on 2688 patients. CAD is diagnosed when stenosis exceeds 50\% of the artery, as evaluated by coronary angiography (gold standard). Only 471 patients underwent the coronary angiography for verification of the CAD status. The rest of the patients were unverified (82.5\%).
 }
 \keyword{datasets}

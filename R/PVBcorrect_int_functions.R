@@ -162,6 +162,331 @@ acc_ebg_boot_ci = function(data, test, disease, covariate = NULL, saturated_mode
   return(acc_ebg_boot_list)
 }
 
+# SIPW ====
+acc_sipw_point = function(data, test, disease, covariate = NULL, option = 2, saturated_model = FALSE,
+                          b = 1000, seednum = NULL, return_data = FALSE, return_detail = FALSE,
+                          show_boot = FALSE, description = TRUE,
+                          r_print_freq = 100) {
+  # data = original data
+  N_data = nrow(data)  # original sample size
+  # add verification status
+  data$verified = 1  # verified: 1 = yes, 0 = no
+  data[is.na(data[, disease]), "verified"] = 0
+
+  # setup empty vector
+  acc_values = rep(NA, 4)
+
+  # gen ps
+  # P(V = 1 | T = t)
+  if (is.null(covariate)) {
+    fmula = reformulate(test, "verified")
+  }
+  # if covariate names supplied as vector, not NULL
+  else {
+    if (saturated_model == FALSE) {
+      fmula = reformulate(c(test, covariate), "verified")
+    } else {
+      fmula = reformulate(paste(c(test, covariate), collapse = " * "), "verified")
+    }
+  }
+  fit = glm(fmula, data = data, family = "binomial")
+  # save ps to original data
+  data$ps = predict(fit, type = "response")
+  # transform ps to weight
+  if (option == 1) {
+    # IPW weight
+    data$ps_w = ifelse(data$verified == 1, 1/data$ps, 1/(1-data$ps))
+  }
+  if (option == 2) {
+    # W_h weight, Krautenbacher 2017
+    data$ps_w = ifelse(data$verified == 1, max(unique(data$ps)) / data$ps,
+                       max(unique((1-data$ps))) / (1-data$ps))
+  }
+
+  # data1 = complete case
+  data1 = na.omit(data)
+  n_data = nrow(data1)
+  data1$p_ipb = data1$ps_w / sum(data1$ps_w)
+
+  # resample
+  data_resample_list = NULL
+  set.seed(seednum)
+  i = 1
+  while (i < b + 1) {
+    # resample
+    sampled = sample(1:n_data, N_data, TRUE, prob = data1$p_ipb)  # bootstrap w weight
+    data_resample = data1[sampled, ]
+    # exclude invalid samples: get the dimension sum, should be 4 for 2x2 epid table
+    sum_tbl = sum(dim(table(data_resample[, test], data_resample[, disease])))
+    # exclude invalid sample with sum < 4
+    if (sum_tbl < 4) {
+      # delete invalid sample
+      data_resample_list[i] = NULL
+      i = i
+    } else {
+      # save valid sample in list
+      data_resample_list[i] = list(data_resample)
+      i = i + 1
+    }
+  }
+
+  acc_resample_list = t(sapply(data_resample_list, acc,
+                               test = test, disease = disease))
+
+  acc_values = apply(acc_resample_list, 2, mean)
+
+  # output
+  if (description == TRUE) {
+    cat("Estimates of accuracy measures\nCorrected for PVB: Scaled Inverse Probability Weighted Resampling Method\n\n")
+  }
+
+  # return data and results
+  if (return_data == TRUE) {
+    return(list(data = data_resample_list, acc = acc_values))
+  }
+
+  # return only results
+  acc_sipw_out = data.frame(Est = acc_values,
+                            row.names = c("Sn", "Sp", "PPV", "NPV"))
+  acc_sipw_list = list(acc_results = acc_sipw_out)
+  return(acc_sipw_list)
+}
+
+
+
+acc_sipw_boot_fun = function(data, indices, test, disease, covariate = NULL,
+                             saturated_model = FALSE, option = 2, b = 1000,
+                             seednum = NULL, # seednum important for sipw! replicable result
+                             show_boot = FALSE, r_print_freq = 100) {
+  data = data[indices, ] # resample from all (verified + unverified)
+  # bcs ipw involves T & V, not D with NA
+  out = acc_sipw_point(data = data, test, disease, covariate,
+                       saturated_model = saturated_model, option = option, b = b, seednum = seednum,
+                       description = FALSE, return_data = FALSE,
+                       show_boot = show_boot, r_print_freq = r_print_freq)
+  out = as.matrix(out$acc_results)
+  return(out)
+}
+
+acc_sipw_boot_ci = function(data, test, disease, covariate = NULL,
+                            saturated_model = FALSE, option = 2,
+                            show_boot = FALSE, description = TRUE,
+                            ci_level = .95, ci_type = "basic",
+                            R = 999, b = 1000, seednum = NULL,
+                            r_print_freq = 100) {
+  # check ci_type, based on 'boot' options
+  ci_type_allowed = c("norm", "basic", "perc", "bca")
+  # only 1 argument allowed
+  if (length(ci_type) > 1) {
+    stop("Invalid 'ci_type' argument.")
+  }
+  # if argument == 1, but type invalid
+  else {
+    if(!any(ci_type == ci_type_allowed)) {
+      stop("Invalid 'ci_type' argument.")
+    }
+  }
+
+  # check for presence of seednum
+  if (!is.null(seednum)) {
+    set.seed(seednum)
+  }  # else boot will select its own seednum
+
+  # run ebg & get ci by bootstrap
+  counter <<- 0
+  acc_sipw_boot_data = boot::boot(data = data, statistic = acc_sipw_boot_fun, R = R,
+                                  test = test, disease = disease, covariate = covariate,
+                                  saturated_model = saturated_model, option = option, b = b, seednum = seednum,
+                                  show_boot = show_boot,
+                                  r_print_freq = r_print_freq)
+  if(show_boot == TRUE) {cat("[ Total Boot Iteration =", R, "]\n\n")}
+  rm(counter, envir = .GlobalEnv)
+  acc_sipw_boot_est = acc_sipw_boot_data$t0
+  acc_sipw_boot_se = apply(acc_sipw_boot_data$t, 2, sd)
+  acc_sipw_boot_ci_data = lapply(1:4, function(i) boot::boot.ci(acc_sipw_boot_data, conf = ci_level, type = ci_type, index = i))
+  acc_sipw_boot_ci = lapply(acc_sipw_boot_ci_data, function(list) list[[4]][(length(list[[4]])-1):length(list[[4]])])
+  acc_sipw_boot_out = t(sapply(1:4, function(i) c(acc_sipw_boot_est[i, ], acc_sipw_boot_se[i], acc_sipw_boot_ci[[i]])))
+  dimnames(acc_sipw_boot_out) = list(c("Sn", "Sp", "PPV", "NPV"), c("Est", "SE", "LowCI", "UppCI"))
+
+  # output
+  if (description == TRUE) {
+    cat("Estimates of accuracy measures\nCorrected for PVB: Scaled Inverse Probability Weighted Resampling Method\n\n")
+  }
+  #print(acc_ebg_boot_out)
+  acc_sipw_boot_list = list(boot_data = acc_sipw_boot_data,
+                            boot_ci_data = acc_sipw_boot_ci_data,
+                            acc_results = acc_sipw_boot_out)  # allows inspection of boot data
+  return(acc_sipw_boot_list)
+}
+
+# SIPW-B ====
+acc_sipwb_point = function(data, test, disease, covariate = NULL, option = 2, saturated_model = FALSE,
+                           rel_size = 1, # ratio control:case, D=0:D=1
+                           b = 1000, seednum = NULL, return_data = FALSE, return_detail = FALSE,
+                           show_boot = FALSE, description = TRUE,
+                           r_print_freq = 100) {
+  # data = original data
+  # rel_size = relative size of d0 to d1 in case-ctrl, default 1 i.e. 1:1
+  N_data = nrow(data)  # original sample size
+  # add verification status
+  data$verified = 1  # verified: 1 = yes, 0 = no
+  data[is.na(data[, disease]), "verified"] = 0
+
+  # setup empty vector
+  acc_values = rep(NA, 2)  # Sn Sp only
+
+  # gen ps
+  # P(V = 1 | T = t)
+  if (is.null(covariate)) {
+    fmula = reformulate(test, "verified")
+  }
+  # if covariate names supplied as vector, not NULL
+  else {
+    if (saturated_model == FALSE) {
+      fmula = reformulate(c(test, covariate), "verified")
+    } else {
+      fmula = reformulate(paste(c(test, covariate), collapse = " * "), "verified")
+    }
+  }
+  fit = glm(fmula, data = data, family = "binomial")
+  # save ps to original data
+  data$ps = predict(fit, type = "response")
+  # transform ps to weight
+  if (option == 1) {
+    # IPW weight
+    data$ps_w = ifelse(data$verified == 1, 1/data$ps, 1/(1-data$ps))
+  }
+  if (option == 2) {
+    # W_h weight, Krautenbacher 2017
+    data$ps_w = ifelse(data$verified == 1, max(unique(data$ps)) / data$ps,
+                       max(unique((1-data$ps))) / (1-data$ps))
+  }
+
+  # data1 = complete case
+  data1 = na.omit(data)
+  n_data = nrow(data1)
+  n_d = table(data1[, disease])
+  multip = n_d[1] / n_d[2]  # d0:d1 ratio to inflate d1
+  data1$ps_w_d1 = data1$ps_w
+  data1$ps_w_d1[data1[, disease] == 1] = data1$ps_w_d1[data1[, disease] == 1] * multip
+  k = sum(data1$ps_w_d1[data1[, disease] == 0])/  # correction factor
+    sum(data1$ps_w_d1[data1[, disease] == 1])     # to allow almost equal d1:d0 ratio
+  data1$ps_w_d1[data1[, disease] == 1] = data1$ps_w_d1[data1[, disease] == 1] * (k / rel_size)
+  data1$p_ipb_d1 = data1$ps_w_d1 / sum(data1$ps_w_d1)
+
+  # resample
+  data_resample_list = NULL
+  set.seed(seednum)
+  i = 1
+  while (i < b + 1) {
+    # resample
+    sampled = sample(1:n_data, N_data, TRUE, prob = data1$p_ipb_d1)  # bootstrap w weight
+    data_resample = data1[sampled, ]
+    # exclude invalid samples: get the dimension sum, should be 4 for 2x2 epid table
+    sum_tbl = sum(dim(table(data_resample[, test], data_resample[, disease])))
+    # exclude invalid sample with sum < 4
+    if (sum_tbl < 4) {
+      # delete invalid sample
+      data_resample_list[i] = NULL
+      i = i
+    } else {
+      # save valid sample in list
+      data_resample_list[i] = list(data_resample)
+      i = i + 1
+    }
+  }
+
+  snsp_resample_list = t(sapply(data_resample_list, snsp,
+                                test = test, disease = disease))
+
+  acc_values = apply(snsp_resample_list, 2, mean)
+
+  # output
+  if (description == TRUE) {
+    cat("Estimates of accuracy measures\nCorrected for PVB: Scaled Inverse Probability Weighted Balanced Resampling Method\n\n")
+  }
+
+  # return data and results
+  if (return_data == TRUE) {
+    return(list(data = data_resample_list, acc = acc_values))
+  }
+
+  # return only results
+  acc_sipwb_out = data.frame(Est = acc_values,
+                             row.names = c("Sn", "Sp"))
+  acc_sipwb_list = list(acc_results = acc_sipwb_out)
+  return(acc_sipwb_list)
+}
+
+acc_sipwb_boot_fun = function(data, indices, test, disease, covariate = NULL,
+                              saturated_model = FALSE, option = 2, b = 1000,
+                              seednum = NULL, # seednum important for sipw! replicable result
+                              rel_size = 1,
+                              show_boot = FALSE, r_print_freq = 100) {
+  data = data[indices, ] # resample from all (verified + unverified)
+  # bcs ipw involves T & V, not D with NA
+  out = acc_sipwb_point(data = data, test, disease, covariate,
+                        saturated_model = saturated_model, option = option, b = b, seednum = seednum,
+                        rel_size = rel_size,
+                        description = FALSE, return_data = FALSE,
+                        show_boot = show_boot, r_print_freq = r_print_freq)
+  out = as.matrix(out$acc_results)
+  return(out)
+}
+
+acc_sipwb_boot_ci = function(data, test, disease, covariate = NULL,
+                             saturated_model = FALSE, option = 2,
+                             rel_size = 1,
+                             show_boot = FALSE, description = TRUE,
+                             ci_level = .95, ci_type = "basic",
+                             R = 999, b = 1000, seednum = NULL,
+                             r_print_freq = 100) {
+  # check ci_type, based on 'boot' options
+  ci_type_allowed = c("norm", "basic", "perc", "bca")
+  # only 1 argument allowed
+  if (length(ci_type) > 1) {
+    stop("Invalid 'ci_type' argument.")
+  }
+  # if argument == 1, but type invalid
+  else {
+    if(!any(ci_type == ci_type_allowed)) {
+      stop("Invalid 'ci_type' argument.")
+    }
+  }
+
+  # check for presence of seednum
+  if (!is.null(seednum)) {
+    set.seed(seednum)
+  }  # else boot will select its own seednum
+
+  # run ebg & get ci by bootstrap
+  counter <<- 0
+  acc_sipwb_boot_data = boot::boot(data = data, statistic = acc_sipwb_boot_fun, R = R,
+                                   test = test, disease = disease, covariate = covariate,
+                                   saturated_model = saturated_model, option = option, rel_size = rel_size,
+                                   b = b, seednum = seednum,
+                                   show_boot = show_boot,
+                                   r_print_freq = r_print_freq)
+  if(show_boot == TRUE) {cat("[ Total Boot Iteration =", R, "]\n\n")}
+  rm(counter, envir = .GlobalEnv)
+  acc_sipwb_boot_est = acc_sipwb_boot_data$t0
+  acc_sipwb_boot_se = apply(acc_sipwb_boot_data$t, 2, sd)
+  acc_sipwb_boot_ci_data = lapply(1:2, function(i) boot::boot.ci(acc_sipwb_boot_data, conf = ci_level, type = ci_type, index = i))
+  acc_sipwb_boot_ci = lapply(acc_sipwb_boot_ci_data, function(list) list[[4]][(length(list[[4]])-1):length(list[[4]])])
+  acc_sipwb_boot_out = t(sapply(1:2, function(i) c(acc_sipwb_boot_est[i, ], acc_sipwb_boot_se[i], acc_sipwb_boot_ci[[i]])))
+  dimnames(acc_sipwb_boot_out) = list(c("Sn", "Sp"), c("Est", "SE", "LowCI", "UppCI"))
+
+  # output
+  if (description == TRUE) {
+    cat("Estimates of accuracy measures\nCorrected for PVB: Scaled Inverse Probability Weighted Balanced Resampling Method\n\n")
+  }
+  #print(acc_ebg_boot_out)
+  acc_sipwb_boot_list = list(boot_data = acc_sipwb_boot_data,
+                             boot_ci_data = acc_sipwb_boot_ci_data,
+                             acc_results = acc_sipwb_boot_out)  # allows inspection of boot data
+  return(acc_sipwb_boot_list)
+}
+
 # EM ====
 # Kosinski & Barnhart, 2003
 
@@ -379,7 +704,7 @@ acc_em_boot_fun = function(data_verified, indices, test, disease, covariate = NU
                      t_max = t_max, cutoff = cutoff,
                      t_print_freq = t_print_freq, return_t = TRUE,  # need to return t to check convergence
                      return_em_out = FALSE,
-                     r_print_freq = TRUE)
+                     r_print_freq = r_print_freq)
   out = as.matrix(rbind(out$acc_results, t = out$t))
   return(out)
 }

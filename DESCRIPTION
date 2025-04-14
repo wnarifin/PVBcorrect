@@ -1,7 +1,7 @@
 Package: PVBcorrect
 Type: Package
 Title: Partial verification bias correction for estimates of accuracy measures in diagnostic accuracy studies
-Version: 0.2.0
+Version: 0.3.0
 Authors@R: 
     person(given = "Wan Nor",
            family = "Arifin",
@@ -16,6 +16,7 @@ Description: The package contains a number of functions to perform partial verif
     The available methods are: Begg and Greenes' method (as extended by Alonzo & Pepe, 2005),
     Begg and Greenes' method 1 and 2 (with PPV and NPV as extended by deGroot et al, 2011), 
     IPB sampling method (Arifin & Yusof, 2022),
+    Scaled Inverse Probability Resampling methods (Arifin & Yusof, 2023; Arifin & Yusof, 2025),
     multiple imputation method by logistic regression (Harel & Zhou, 2006),
     and EM-based logistic regression method (Kosinski & Barnhart, 2003).
 License: GPL (>= 3)
@@ -24,7 +25,7 @@ LazyData: true
 Imports:
     boot,
     mice
-RoxygenNote: 7.3.1
+RoxygenNote: 7.3.2
 Suggests: 
     testthat (>= 3.0.0)
 Config/testthat/edition: 3

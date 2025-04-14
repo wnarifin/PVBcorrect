@@ -10,15 +10,15 @@ acc_ebg(
   disease,
   covariate = NULL,
   saturated_model = FALSE,
-  show_fit = FALSE,
-  show_boot = FALSE,
-  description = TRUE,
   ci = FALSE,
   ci_level = 0.95,
   ci_type = "basic",
   R = 999,
   seednum = NULL,
-  r_print_freq = 100
+  show_fit = FALSE,
+  show_boot = FALSE,
+  r_print_freq = 100,
+  description = TRUE
 )
 }
 \arguments{
@@ -33,12 +33,6 @@ Specify as name vector, e.g. c("X1", "X2") for two or more variables. The variab
 
 \item{saturated_model}{Set as \code{TRUE} to obtain the original Begg and Greenes' (1983) when all possible interactions are included.}
 
-\item{show_fit}{Set to \code{TRUE} to view model fit summary for the logistic regression model.}
-
-\item{show_boot}{Set to \code{TRUE} to show bootstrap iterations.}
-
-\item{description}{Print the name of this analysis. The default is \code{TRUE}. This can be turned off for repeated analysis, for example in bootstrapped results.}
-
 \item{ci}{View confidence interval (CI). The default is \code{FALSE}.}
 
 \item{ci_level}{Set the CI width. The default is 0.95 i.e. 95\% CI.}
@@ -51,8 +45,14 @@ for bootstrapped CI. See \code{\link[boot]{boot.ci}} for details.}
 \item{seednum}{Set the seed number for the bootstrapped CI. The default is not set, so it depends on the user
 to set it outside or inside the function.}
 
+\item{show_fit}{Set to \code{TRUE} to view model fit summary for the logistic regression model.}
+
+\item{show_boot}{Set to \code{TRUE} to show bootstrap iterations.}
+
 \item{r_print_freq}{Print the current bootstrap sample number at each specified interval.
 Default \code{r_print_freq = 100}.}
+
+\item{description}{Print the name of this analysis. The default is \code{TRUE}. This can be turned off for repeated analysis, for example in bootstrapped results.}
 }
 \value{
 A list object containing:
