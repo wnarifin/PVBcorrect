@@ -28,6 +28,10 @@ install.packages("devtools")
 devtools::install_github("wnarifin/PVBcorrect")
 ```
 
+## Usage, news and updates
+
+Please view Wiki page: https://github.com/wnarifin/PVBcorrect/wiki
+
 ## License
 
 This project is licensed under the GPL (>= 3) License - see the [LICENSE.md](LICENSE.md) file for details.
