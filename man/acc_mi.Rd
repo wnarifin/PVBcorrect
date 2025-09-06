@@ -56,16 +56,17 @@ A list object containing:
 Perform PVB correction by multiple imputation.
 }
 \examples{
-# no covariate
-acc_mi(data = cad_pvb, test = "T", disease = "D", ci = TRUE, seednum = 12345, m = 10)
+# point estimates
+acc_mi(data = cad_pvb, test = "T", disease = "D", ci = TRUE, seednum = 12345, m = 5)
 
 # with other imputation method. e.g. random forest "rf"
-acc_mi(data = cad_pvb, test = "T", disease = "D", ci = TRUE, seednum = 12345, m = 10,
-       method = "rf")
+acc_mi(data = cad_pvb, test = "T", disease = "D", ci = TRUE, seednum = 12345, m = 5,
+       method = "pmm")
 
-# with three covariates
-acc_mi(data = cad_pvb, test = "T", disease = "D", covariate = c("X1", "X2", "X3"),
-       ci = TRUE, seednum = 12345, m = 10)
+# with covariate and confidence interval
+acc_mi(data = cad_pvb, test = "T", disease = "D", covariate = "X3",
+       ci = TRUE, seednum = 12345, m = 5)
+
 }
 \references{
 \enumerate{

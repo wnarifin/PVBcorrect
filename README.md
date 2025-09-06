@@ -8,7 +8,7 @@ available methods are:
 - Begg and Greenes' method 1 and 2 (with PPV and NPV as extended by deGroot et al, 2011)
 - Multiple imputation method by logistic regression (Harel & Zhou, 2006)
 - EM-based logistic regression method (Kosinski & Barnhart, 2003)
-- Inverse Probability Weighted (IPW) method (Alonzo & Pepe, 2005) 
+- Inverse Probability Weighting (IPW) method (Alonzo & Pepe, 2005) 
 - Inverse Probability Bootstrap (IPB) sampling method (Arifin & Yusof, 2022; Nahorniak et al., 2015)
 - Scaled Inverse Probability Resampling methods (Arifin & Yusof, 2023; Arifin & Yusof, 2025)
 

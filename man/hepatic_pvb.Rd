@@ -7,9 +7,9 @@
 \format{
 A data frame with 650 rows and three variables:
 \describe{
-   \item{Liver cancer, \eqn{disease}:}{Binary, 1 = Yes, 0 = No}
-   \item{Hepatic scintigraphy, \eqn{test}:}{Binary, 1 = Positive, 0 = Negative}
-   \item{Verified, \eqn{verified}:}{Binary, 1 = Yes, 0 = No}
+  \item{disease:}{Liver cancer, \eqn{disease}: Binary, 1 = Yes, 0 = No}
+  \item{test:}{Hepatic scintigraphy, \eqn{test}: Binary, 1 = Positive, 0 = Negative}
+  \item{verified:}{Verified, \eqn{verified}: Binary, 1 = Yes, 0 = No}
 }
 }
 \source{

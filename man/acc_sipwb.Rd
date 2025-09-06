@@ -21,6 +21,8 @@ acc_sipwb(
   seednum = NULL,
   return_data = FALSE,
   return_detail = FALSE,
+  show_boot = FALSE,
+  r_print_freq = 100,
   description = TRUE
 )
 }
@@ -59,6 +61,11 @@ to set it outside or inside the function.}
 
 \item{return_detail}{Return accuracy measures for each of the bootstrapped samples.}
 
+\item{show_boot}{Set to \code{TRUE} to show bootstrap iterations.}
+
+\item{r_print_freq}{Print the current bootstrap sample number at each specified interval.
+Default \code{r_print_freq = 100}.}
+
 \item{description}{Print the name of this analysis. The default is \code{TRUE}. This can be turned off for repeated analysis, for example in bootstrapped results.}
 }
 \value{
@@ -73,12 +80,12 @@ Perform PVB correction by scaled inverse probability weighted balanced resamplin
 \examples{
 # point estimates
 acc_sipwb(data = cad_pvb, test = "T", disease = "D", b = 100, seednum = 12345)
-acc_sipwb(data = cad_pvb, test = "T", disease = "D", covariate = c("X1","X2","X3"),
+acc_sipwb(data = cad_pvb, test = "T", disease = "D", covariate = "X3",
          b = 100, seednum = 12345)
 
 # with bootstrapped confidence interval
-acc_sipwb(data = cad_pvb, test = "T", disease = "D", ci = TRUE, ci_type = "perc",
-         b = 100, R = 9, seednum = 12345)
+acc_sipwb(data = cad_pvb, test = "T", disease = "D", ci = TRUE,
+         b = 100, R = 9, seednum = 12345)  # use small b, R for testing
 }
 \references{
 \enumerate{

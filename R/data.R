@@ -3,14 +3,11 @@
 #' Single-photon-emission computed-tomography (SPECT) thallium is a non-invasive diagnostic test used to diagnose coronary artery disease (CAD). SPECT thallium test was performed on 2688 patients. CAD is diagnosed when stenosis exceeds 50\% of the artery, as evaluated by coronary angiography (gold standard). Only 471 patients underwent the coronary angiography for verification of the CAD status. The rest of the patients were unverified (82.5\%).
 #' @format A data frame with 2688 rows and five variables:
 #' \describe{
-#'   \item{SPECT thallium test, \eqn{T}:}{Binary, 1 = Positive, 0 = Negative}
-#'   \item{CAD, \eqn{D}:}{Binary, 1 = Yes, 0 = No}
-#'   \item{Covariates, \eqn{X}:}
-#'   \enumerate{
-#'     \item{Gender, \eqn{X1}: Binary, 1 = Male, 0 = Female}
-#'     \item{Stress mode, \eqn{X2}: Binary, 1 = Dipyridamole (Medication for stress test when the patient is unable to exercise), 0 = Exercise}
-#'     \item{Age, \eqn{X3}: Binary, 1 = 60 years and above, 0 = Below 60 years}
-#'   }
+#'   \item{T:}{SPECT thallium test, \eqn{T}: Binary, 1 = Positive, 0 = Negative}
+#'   \item{D:}{CAD, \eqn{D}: Binary, 1 = Yes, 0 = No}
+#'   \item{X1:}{Gender (covariate), \eqn{X_1}: Binary, 1 = Male, 0 = Female}
+#'   \item{X2:}{Stress mode (covariate), \eqn{X_2}: Binary, 1 = Dipyridamole (Medication for stress test when the patient is unable to exercise), 0 = Exercise}
+#'   \item{X3:}{Age (covariate), \eqn{X_3}: Binary, 1 = 60 years and above, 0 = Below 60 years}
 #' }
 #' @source
 #' \enumerate{
@@ -23,9 +20,9 @@
 #' The data set pertains to hepatic scintigraphy, a diagnostic imaging technique used for detecting liver cancer. The test was performed on 650 patients, where 344 patients were verified by liver pathological examination (gold standard test). The percentage of unverified patients is 47.1\%.
 #' @format A data frame with 650 rows and three variables:
 #' \describe{
-#'    \item{Liver cancer, \eqn{disease}:}{Binary, 1 = Yes, 0 = No}
-#'    \item{Hepatic scintigraphy, \eqn{test}:}{Binary, 1 = Positive, 0 = Negative}
-#'    \item{Verified, \eqn{verified}:}{Binary, 1 = Yes, 0 = No}
+#'   \item{disease:}{Liver cancer, \eqn{disease}: Binary, 1 = Yes, 0 = No}
+#'   \item{test:}{Hepatic scintigraphy, \eqn{test}: Binary, 1 = Positive, 0 = Negative}
+#'   \item{verified:}{Verified, \eqn{verified}: Binary, 1 = Yes, 0 = No}
 #' }
 #' @source
 #' \enumerate{
@@ -37,9 +34,9 @@
 #' Diaphanography test is a noninvasive method (diagnostic test) of breast examination by transillumination using visible or infrared light to detect the presence of breast cancer. The test was performed on 900 patients. Only 88 patients were verified by breast tissue biopsy for histological examination (gold standard test). The percentage of unverified patients is 90.2\%.
 #' @format A data frame with 900 rows and three variables:
 #' \describe{
-#'    \item{Breast cancer, \eqn{disease}:}{Binary, 1 = Yes, 0 = No}
-#'    \item{Diaphanography, \eqn{test}:}{Binary, 1 = Positive, 0 = Negative}
-#'    \item{Verified, \eqn{verified}:}{Binary, 1 = Yes, 0 = No}
+#'   \item{disease:}{Breast cancer, \eqn{disease}: Binary, 1 = Yes, 0 = No}
+#'   \item{test:}{Diaphanography, \eqn{test}: Binary, 1 = Positive, 0 = Negative}
+#'   \item{verified:}{Verified, \eqn{verified}: Binary, 1 = Yes, 0 = No}
 #' }
 #' @source
 #' \enumerate{

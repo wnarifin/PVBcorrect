@@ -163,13 +163,9 @@ acc_cca = function(data, test, disease,
 #' # point estimates
 #' acc_ebg(data = cad_pvb, test = "T", disease = "D")
 #' acc_ebg(data = cad_pvb, test = "T", disease = "D", covariate = "X3")
-#' acc_ebg(data = cad_pvb, test = "T", disease = "D", covariate = "X3", saturated_model = TRUE)
 #'
 #' # with bootstrapped confidence interval
 #' acc_ebg(data = cad_pvb, test = "T", disease = "D", ci = TRUE, seednum = 12345)
-#' acc_ebg(data = cad_pvb, test = "T", disease = "D", covariate = "X3", ci = TRUE, seednum = 12345)
-#' acc_ebg(data = cad_pvb, test = "T", disease = "D", covariate = "X3", saturated_model = TRUE,
-#'         ci = TRUE, seednum = 12345)
 #' @export
 acc_ebg = function(data, test, disease, covariate = NULL, saturated_model = FALSE,
                    ci = FALSE, ci_level = .95, ci_type = "basic",
@@ -179,7 +175,8 @@ acc_ebg = function(data, test, disease, covariate = NULL, saturated_model = FALS
   # w/out ci
   if (ci == FALSE) {
     acc_ebg_point(data, test, disease, covariate, saturated_model,
-                  show_fit, show_boot = FALSE, description = description)
+                  show_fit, show_boot = FALSE,  # because not bootstrap for point estimate
+                  description = description)
   }
 
   # w ci
@@ -367,6 +364,52 @@ acc_dg2 = function(data, test, disease, covariate,
   return(acc_dg2)
 }
 
+#' PVB correction by Inverse Probability Weighting Estimator method
+#'
+#' @description Perform PVB correction by Inverse Probability Weighting Estimator method (Alonzo & Pepe, 2005).
+#' @inheritParams acc_ebg
+#' @return A list object containing:
+#' \describe{
+#'   \item{acc_results}{The accuracy results.}
+#' }
+#' @references
+#' \enumerate{
+#'   \item{Alonzo, T. A., & Pepe, M. S. (2005). Assessing accuracy of a continuous screening test in the presence of verification bias. Journal of the Royal Statistical Society: Series C (Applied Statistics), 54(1), 173–190.}
+#'   \item{He, H., & McDermott, M. P. (2012). A robust method using propensity score stratification for correcting verification bias for binary tests. Biostatistics, 13(1), 32–47.}
+#' }
+#' @examples
+#' # point estimates
+#' acc_ipw(data = cad_pvb, test = "T", disease = "D")
+#' acc_ipw(data = cad_pvb, test = "T", disease = "D", covariate = "X3")
+#'
+#' # with bootstrapped confidence interval
+#' acc_ipw(data = cad_pvb, test = "T", disease = "D", ci = TRUE, seednum = 12345)
+#' @export
+acc_ipw = function(data, test, disease, covariate = NULL, saturated_model = FALSE,
+                   ci = FALSE, ci_level = .95, ci_type = "basic",
+                   R = 999, seednum = NULL,
+                   show_fit = FALSE, # show fit of glm ps
+                   show_boot = FALSE, r_print_freq = 100,
+                   description = TRUE) {
+  # w/out ci
+  if (ci == FALSE) {
+    acc_ipw_point(data, test, disease, covariate, saturated_model,
+                  show_fit,
+                  show_boot = FALSE, # because point est.
+                  description = description)
+  }
+
+  # w ci
+  else {
+    acc_ipw_boot_ci(data, test, disease, covariate, saturated_model,
+                    show_fit,
+                    show_boot, r_print_freq = r_print_freq,
+                    ci_level = ci_level, ci_type = ci_type,
+                    R = R, seednum = seednum,
+                    description = description)
+  }
+}
+
 # IPB method
 # Arifin & Yusof, 2022; Nahorniak et al., 2015
 # IPB sampling for PVB correction is based on general IPB by Nahorniak et al, 2015
@@ -395,15 +438,15 @@ acc_dg2 = function(data, test, disease, covariate,
 #'   \item{Nahorniak, M., Larsen, D. P., Volk, C., & Jordan, C. E. (2015). Using inverse probability bootstrap sampling to eliminate sample induced bias in model based analysis of unequal probability samples. PLoS One, 10(6), e0131765.}
 #' }
 #' @examples
-#' # no covariate
-#' acc_ipb(data = cad_pvb, test = "T", disease = "D", b = 1000, seednum = 12345)
-#'
-#' # with three covariates
-#' acc_ipb(data = cad_pvb, test = "T", disease = "D", covariate = c("X1","X2","X3"),
-#'         b = 1000, seednum = 12345)
+#' # point estimates
+#' acc_ipb(data = cad_pvb, test = "T", disease = "D", b = 100, seednum = 12345)
+#' acc_ipb(data = cad_pvb, test = "T", disease = "D", covariate = "X3",
+#'         b = 100, seednum = 12345)
 #'
 #' # with confidence interval
-#' acc_ipb(data = cad_pvb, test = "T", disease = "D", ci = TRUE, b = 1000, seednum = 12345)
+#' acc_ipb(data = cad_pvb, test = "T", disease = "D", ci = TRUE,
+#'         b = 100, seednum = 12345)  # use small b for testing
+#' @importFrom stats na.omit quantile
 #' @export
 acc_ipb = function(data, test, disease, covariate = NULL, saturated_model = FALSE, option = 2,
                    ci = FALSE, ci_level = .95, ci_type = "norm",
@@ -412,8 +455,9 @@ acc_ipb = function(data, test, disease, covariate = NULL, saturated_model = FALS
                    description = TRUE) {
   # data = original data
   # add verification status
-  data$verified = 1  # verified: 1 = yes, 0 = no
-  data[is.na(data[, disease]), "verified"] = 0
+  # verified: 1 = yes, 0 = no
+  data = transform(data, verified = ifelse(is.na(get(disease)), 0, 1))
+  verified = "verified"
 
   # setup empty vector
   acc_values = rep(NA, 4)  # Sn Sp only
@@ -422,15 +466,15 @@ acc_ipb = function(data, test, disease, covariate = NULL, saturated_model = FALS
   # P(V = 1 | T = t)
   # if no covariate
   if (is.null(covariate)) {
-    fmula = reformulate(test, "verified")
+    fmula = reformulate(test, verified)
     fit = glm(fmula, data = data, family = "binomial")
   }
   # if covariate names supplied as vector, not NULL
   else {
     if (saturated_model == FALSE) {
-      fmula = reformulate(c(test, covariate), "verified")
+      fmula = reformulate(c(test, covariate), verified)
     } else {
-      fmula = reformulate(paste(c(test, covariate), collapse = " * "), "verified")
+      fmula = reformulate(paste(c(test, covariate), collapse = " * "), verified)
     }
     fit = glm(fmula, data = data, family = "binomial")
   }
@@ -439,11 +483,11 @@ acc_ipb = function(data, test, disease, covariate = NULL, saturated_model = FALS
   # transform ps to weight
   if (option == 1) {
     # IPW weight
-    data$ps_w = ifelse(data[, "verified"] == 1, 1/data$ps, 1/(1-data$ps))
+    data$ps_w = ifelse(data[, verified] == 1, 1/data$ps, 1/(1-data$ps))
   }
   if (option == 2) {
     # W_h weight, Krautenbacher 2017
-    data$ps_w = ifelse(data[, "verified"] == 1, max(unique(data$ps)) / data$ps,
+    data$ps_w = ifelse(data[, verified] == 1, max(unique(data$ps)) / data$ps,
                        max(unique((1-data$ps))) / (1-data$ps))
   }
 
@@ -543,6 +587,10 @@ acc_ipb = function(data, test, disease, covariate = NULL, saturated_model = FALS
 #' @param return_detail Return accuracy measures for each of the bootstrapped samples.
 #' @return A list object containing:
 #' \describe{
+#'   \item{boot_data}{An object of class "boot" from \code{\link[boot]{boot}}.
+#'   Contains Sensitivity, Specificity, PPV, and NPV}
+#'   \item{boot_ci_data}{A list of objects of type "bootci" from \code{\link[boot]{boot.ci}}.
+#'   Contains Sensitivity, Specificity, PPV, NPV.}
 #'   \item{acc_results}{The accuracy results.}
 #' }
 #' @references
@@ -556,24 +604,24 @@ acc_ipb = function(data, test, disease, covariate = NULL, saturated_model = FALS
 #' @examples
 #' # point estimates
 #' acc_sipw(data = cad_pvb, test = "T", disease = "D", b = 100, seednum = 12345)
-#' acc_sipw(data = cad_pvb, test = "T", disease = "D", covariate = c("X1","X2","X3"),
+#' acc_sipw(data = cad_pvb, test = "T", disease = "D", covariate = "X3",
 #'          b = 100, seednum = 12345)
 #'
 #' # with bootstrapped confidence interval
-#' acc_sipw(data = cad_pvb, test = "T", disease = "D", ci = TRUE, ci_type = "perc",
-#'          b = 100, R = 9, seednum = 12345)
+#' acc_sipw(data = cad_pvb, test = "T", disease = "D", ci = TRUE,
+#'          b = 100, R = 9, seednum = 12345)  # use small b, R for testing
 #' @export
 acc_sipw = function(data, test, disease, covariate = NULL, saturated_model = FALSE, option = 2,
                     ci = FALSE, ci_level = .95, ci_type = "basic",
                     b = 1000, R = 999, seednum = NULL,
                     return_data = FALSE, return_detail = FALSE,
-                    #show_boot = FALSE, r_print_freq = 100, # disabled for now
+                    show_boot = FALSE, r_print_freq = 100,
                     description = TRUE) {
   # w/out ci
   if (ci == FALSE) {
     acc_sipw_point(data, test, disease, covariate, saturated_model,
                    option = option,
-                   #show_boot = FALSE, # disabled for now
+                   show_boot = FALSE, # because not bootstrap for point estimate
                    b = b, seednum = seednum, return_data = return_data,
                    description = description)
   }
@@ -582,7 +630,7 @@ acc_sipw = function(data, test, disease, covariate = NULL, saturated_model = FAL
   else {
     acc_sipw_boot_ci(data, test, disease, covariate, saturated_model,
                      option = option,
-                     #show_boot = show_boot, r_print_freq = r_print_freq, # disabled for now
+                     show_boot = show_boot, r_print_freq = r_print_freq,
                      ci_level = ci_level, ci_type = ci_type,
                      R = R, b = b, seednum = seednum,
                      description = description)
@@ -618,26 +666,26 @@ acc_sipw = function(data, test, disease, covariate = NULL, saturated_model = FAL
 #' @examples
 #' # point estimates
 #' acc_sipwb(data = cad_pvb, test = "T", disease = "D", b = 100, seednum = 12345)
-#' acc_sipwb(data = cad_pvb, test = "T", disease = "D", covariate = c("X1","X2","X3"),
+#' acc_sipwb(data = cad_pvb, test = "T", disease = "D", covariate = "X3",
 #'          b = 100, seednum = 12345)
 #'
 #' # with bootstrapped confidence interval
-#' acc_sipwb(data = cad_pvb, test = "T", disease = "D", ci = TRUE, ci_type = "perc",
-#'          b = 100, R = 9, seednum = 12345)
+#' acc_sipwb(data = cad_pvb, test = "T", disease = "D", ci = TRUE,
+#'          b = 100, R = 9, seednum = 12345)  # use small b, R for testing
 #' @export
 acc_sipwb = function(data, test, disease, covariate = NULL, saturated_model = FALSE, option = 2,
                      rel_size = 1, # ratio control:case, D=0:D=1
                      ci = FALSE, ci_level = .95, ci_type = "basic",
                      b = 1000, R = 999, seednum = NULL,
                      return_data = FALSE, return_detail = FALSE,
-                     #show_boot = FALSE, r_print_freq = 100, # disabled for now
+                     show_boot = FALSE, r_print_freq = 100,
                      description = TRUE) {
   # w/out ci
   if (ci == FALSE) {
     acc_sipwb_point(data, test, disease, covariate, saturated_model,
                     option = option,
                     rel_size = rel_size, # ratio control:case, D=0:D=1
-                    #show_boot = FALSE, # disabled for now
+                    show_boot = FALSE, # because no bootstrap for point estimate
                     b = b, seednum = seednum, return_data = return_data,
                     description = description)
   }
@@ -647,7 +695,7 @@ acc_sipwb = function(data, test, disease, covariate = NULL, saturated_model = FA
     acc_sipwb_boot_ci(data, test, disease, covariate, saturated_model,
                       option = option,
                       rel_size = rel_size, # ratio control:case, D=0:D=1
-                      #show_boot = show_boot, r_print_freq = r_print_freq, # disabled for now
+                      show_boot = show_boot, r_print_freq = r_print_freq,
                       ci_level = ci_level, ci_type = ci_type,
                       R = R, b = b, seednum = seednum,
                       description = description)
@@ -675,16 +723,17 @@ acc_sipwb = function(data, test, disease, covariate = NULL, saturated_model = FA
 #'   \item{Harel, O., & Zhou, X.-H. (2006). Multiple imputation for correcting verification bias. Statistics in Medicine, 25(22), 3769–3786.}
 #' }
 #' @examples
-#' # no covariate
-#' acc_mi(data = cad_pvb, test = "T", disease = "D", ci = TRUE, seednum = 12345, m = 10)
+#' # point estimates
+#' acc_mi(data = cad_pvb, test = "T", disease = "D", ci = TRUE, seednum = 12345, m = 5)
 #'
 #' # with other imputation method. e.g. random forest "rf"
-#' acc_mi(data = cad_pvb, test = "T", disease = "D", ci = TRUE, seednum = 12345, m = 10,
-#'        method = "rf")
+#' acc_mi(data = cad_pvb, test = "T", disease = "D", ci = TRUE, seednum = 12345, m = 5,
+#'        method = "pmm")
 #'
-#' # with three covariates
-#' acc_mi(data = cad_pvb, test = "T", disease = "D", covariate = c("X1", "X2", "X3"),
-#'        ci = TRUE, seednum = 12345, m = 10)
+#' # with covariate and confidence interval
+#' acc_mi(data = cad_pvb, test = "T", disease = "D", covariate = "X3",
+#'        ci = TRUE, seednum = 12345, m = 5)
+#'
 #' @importFrom stats qt
 #' @export
 acc_mi = function(data, test, disease, covariate = NULL,
@@ -729,11 +778,8 @@ acc_mi = function(data, test, disease, covariate = NULL,
   else {
     # Compile est & var from each imputed dataset
     acc_mi_data = lapply(data_mi_method_data, acc_cca, test = test, disease = disease, ci = TRUE, description = FALSE)
-    acc_mi_data_est = as.matrix(as.data.frame(lapply(acc_mi_data, function(i) subset(i$acc_results, select = Est))))
-    acc_mi_data_var = as.matrix(as.data.frame(lapply(acc_mi_data, function(i) subset(i$acc_results, select = SE)))^2)  # turn to Variance
-    # when acc_cca returns data.frame
-    # acc_mi_data_est = as.matrix(as.data.frame(lapply(acc_mi_data, subset, select = Est)))
-    # acc_mi_data_var = as.matrix(as.data.frame(lapply(acc_mi_data, subset, select = SE))^2)  # turn to Variance
+    acc_mi_data_est <- sapply(acc_mi_data, function(i) i$acc_results$Est)
+    acc_mi_data_var <- sapply(acc_mi_data, function(i) i$acc_results$SE^2) # turn to Variance
 
     # Pool in mice
     acc_mi_pool = list()
@@ -795,7 +841,26 @@ acc_mi = function(data, test, disease, covariate = NULL,
 #' \enumerate{
 #'   \item{Kosinski, A. S., & Barnhart, H. X. (2003). Accounting for nonignorable verification bias in assessment of diagnostic tests. Biometrics, 59(1), 163–171.}
 #' }
-#' @example long_example/acc_em_ex.R
+#' @examples
+#' # For sample run, test with low R boot number, low t_max, low cutoff
+#' # The results will not be good
+#'
+#' # without covariate
+#' em_out = acc_em(data = cad_pvb, test = "T", disease = "D", ci = TRUE, seednum = 12345,
+#'                 R = 2, t_max = 100, cutoff = 0.005)
+#' em_out$acc_results
+#' em_out$boot_data$t  # bootstrapped data, 1:5 columns are Sn, Sp, PPV, NPV,
+#'                     # t (i.e. EM iteration taken for convergence)
+#' em_out$boot_ci_data
+#'
+#' # With covariate, for real run, it will take some time
+#' start_time = proc.time()
+#' em_outx = acc_em(data = cad_pvb, test = "T", disease = "D", covariate = "X3", ci = TRUE,
+#'                  seednum = 12345, R = 2, t_max = 100, cutoff = 0.005)
+#'           # with covariate, better set larger t_max
+#' elapsed_time = proc.time() - start_time; elapsed_time  # view elapsed time in seconds
+#' em_outx$acc_results
+#' em_outx$boot_data$t
 #' @export
 acc_em = function(data, test, disease, covariate = NULL, mnar = TRUE,
                   ci = FALSE, ci_level = .95, ci_type = "basic",

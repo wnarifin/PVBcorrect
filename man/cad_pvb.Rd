@@ -7,14 +7,11 @@
 \format{
 A data frame with 2688 rows and five variables:
 \describe{
-  \item{SPECT thallium test, \eqn{T}:}{Binary, 1 = Positive, 0 = Negative}
-  \item{CAD, \eqn{D}:}{Binary, 1 = Yes, 0 = No}
-  \item{Covariates, \eqn{X}:}
-  \enumerate{
-    \item{Gender, \eqn{X1}: Binary, 1 = Male, 0 = Female}
-    \item{Stress mode, \eqn{X2}: Binary, 1 = Dipyridamole (Medication for stress test when the patient is unable to exercise), 0 = Exercise}
-    \item{Age, \eqn{X3}: Binary, 1 = 60 years and above, 0 = Below 60 years}
-  }
+  \item{T:}{SPECT thallium test, \eqn{T}: Binary, 1 = Positive, 0 = Negative}
+  \item{D:}{CAD, \eqn{D}: Binary, 1 = Yes, 0 = No}
+  \item{X1:}{Gender (covariate), \eqn{X_1}: Binary, 1 = Male, 0 = Female}
+  \item{X2:}{Stress mode (covariate), \eqn{X_2}: Binary, 1 = Dipyridamole (Medication for stress test when the patient is unable to exercise), 0 = Exercise}
+  \item{X3:}{Age (covariate), \eqn{X_3}: Binary, 1 = 60 years and above, 0 = Below 60 years}
 }
 }
 \source{

@@ -66,15 +66,14 @@ A list object containing:
 Perform PVB correction by inverse probability bootstrap sampling.
 }
 \examples{
-# no covariate
-acc_ipb(data = cad_pvb, test = "T", disease = "D", b = 1000, seednum = 12345)
-
-# with three covariates
-acc_ipb(data = cad_pvb, test = "T", disease = "D", covariate = c("X1","X2","X3"),
-        b = 1000, seednum = 12345)
+# point estimates
+acc_ipb(data = cad_pvb, test = "T", disease = "D", b = 100, seednum = 12345)
+acc_ipb(data = cad_pvb, test = "T", disease = "D", covariate = "X3",
+        b = 100, seednum = 12345)
 
 # with confidence interval
-acc_ipb(data = cad_pvb, test = "T", disease = "D", ci = TRUE, b = 1000, seednum = 12345)
+acc_ipb(data = cad_pvb, test = "T", disease = "D", ci = TRUE,
+        b = 100, seednum = 12345)  # use small b for testing
 }
 \references{
 \enumerate{

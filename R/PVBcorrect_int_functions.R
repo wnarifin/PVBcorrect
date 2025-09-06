@@ -73,11 +73,11 @@ acc_ebg_point = function(data, test, disease, covariate = NULL, saturated_model 
   acc_values[4] = sum((1 - preds) * acc_values[2]) / sum((1 - preds) * acc_values[2] + preds * (1- acc_values[1]))
 
   # output
-  if (show_boot == TRUE) {
+  if (show_boot == TRUE) {  # don't remove, this is for *_boot_ci use
     show_fit = FALSE  # force set as FALSE
-    if (exists("counter")) {
+    if (exists("counter")) {  # counter is set in *_boot_ci
       if(counter %% r_print_freq == 0) {cat("=== Boot Iteration =", counter, "===\n")}
-      counter <<- counter + 1
+      counter <<- counter + 1  # updated in .GlobalEnv, else R will clear it!
     }
   }
   if (show_fit == TRUE) {
@@ -135,7 +135,7 @@ acc_ebg_boot_ci = function(data, test, disease, covariate = NULL, saturated_mode
   }  # else boot will select its own seednum
 
   # run ebg & get ci by bootstrap
-  counter <<- 0
+  counter <<- 0  # set in .GlobalEnv, else R will clear it!
   acc_ebg_boot_data = boot::boot(data = data_verified, statistic = acc_ebg_boot_fun, R = R,
                            test = test, disease = disease, covariate = covariate, saturated_model = saturated_model,
                            show_boot = show_boot, data_all = data_all, r_print_freq = r_print_freq)
@@ -160,6 +160,174 @@ acc_ebg_boot_ci = function(data, test, disease, covariate = NULL, saturated_mode
                            boot_ci_data = acc_ebg_boot_ci_data,
                            acc_results = acc_ebg_boot_out)  # allows inspection of boot data
   return(acc_ebg_boot_list)
+}
+
+# IPW ====
+# Alonzo & Pepe, 2005
+
+# IPW internal functions
+acc_ipw_point = function(data, test, disease, covariate = NULL, saturated_model = FALSE,
+                         show_fit = FALSE, show_boot = FALSE, description = TRUE,
+                         data_all = NULL,
+                         r_print_freq = 100) {
+  # data = original data
+  # add verification status
+  data$verified = 1  # verified: 1 = yes, 0 = no
+  data[is.na(data[, disease]), "verified"] = 0
+
+  # setup empty vector
+  acc_values = rep(NA, 4)
+
+  # gen ps/pi
+  # P(V = 1 | T = t)
+  # if no covariate
+  if (is.null(covariate)) {
+    fmula = reformulate(test, "verified")
+    fit = glm(fmula, data = data, family = "binomial")
+  }
+  # if covariate names supplied as vector, not NULL
+  else {
+    if (saturated_model == FALSE) {
+      fmula = reformulate(c(test, covariate), "verified")
+    } else {
+      fmula = reformulate(paste(c(test, covariate), collapse = " * "), "verified")
+    }
+    fit = glm(fmula, data = data, family = "binomial")
+  }
+  data$ps = predict(fit, type = "response")
+
+  # data_all = full data, preds for each data points, used with boot
+  if (is.null(data_all)) {
+    data_all = data
+  }
+
+  # recode NA to -1
+  data_ps = data
+  data_ps[is.na(data_ps[, disease]), disease] = -1  # so as data$verified * data$disease == 0 for NA
+
+  # get measures from fitted model
+  # Sn, P(T=1|D=1)
+  acc_values[1] = sum((data_ps[, test] * data_ps[, "verified"] * data_ps[, disease]) / data_ps$ps) /
+    sum((data_ps[, "verified"] * data_ps[, disease]) / data_ps$ps)
+  # Sp, P(T=0|D=0)
+  acc_values[2] = sum(((1 - data_ps[, test]) * data_ps[, "verified"] * (1 - data_ps[, disease])) / data_ps$ps) /
+    sum((data_ps[, "verified"] * (1 - data_ps[, disease])) / data_ps$ps)
+  # For PPV & NPV, follow formulas from Arifin & Yusoff (2022), Stats in Med
+  # Need to get P(D=1), preds
+  # Rely on EBG for this
+  # from EBG ---
+  # if no covariate
+  if (is.null(covariate)) {
+    fmula = reformulate(test, disease)
+    fit_ = glm(fmula, data = data, family = "binomial")  # for preds
+  }
+  # if covariate names supplied as vector, not NULL
+  else {
+    if (saturated_model == FALSE) {
+      fmula = reformulate(c(test, covariate), disease)
+    } else {
+      fmula = reformulate(paste(c(test, covariate), collapse = " * "), disease)
+    }
+    fit_ = glm(fmula, data = data, family = "binomial")  # for preds
+  }
+  # data_all = full data, preds for each data points, used with boot
+  if (is.null(data_all)) {
+    data_all = data
+  }
+  preds = predict(fit_, data_all, type = "response")  # Predicted for complete & incomplete data
+  # end from EBG
+  # Use preds from EBG, and Sn & Sp from IPW
+  # PPV, P(D=1|T=1)
+  acc_values[3] = sum(preds * acc_values[1]) / sum(preds * acc_values[1] + (1 - preds) * (1 - acc_values[2]))
+  # NPV, P(D=0|T=0)
+  acc_values[4] = sum((1 - preds) * acc_values[2]) / sum((1 - preds) * acc_values[2] + preds * (1- acc_values[1]))
+
+
+  # output
+  if (show_boot == TRUE) {  # don't remove, this is for *_boot_ci use
+    show_fit = FALSE  # force set as FALSE
+    if (exists("counter")) {  # counter is set in *_boot_ci
+      if(counter %% r_print_freq == 0) {cat("=== Boot Iteration =", counter, "===\n")}
+      counter <<- counter + 1  # updated in .GlobalEnv, else R will clear it!
+    }
+  }
+  if (show_fit == TRUE) {
+    # special option with formatted, show model fit summary
+    cat("\nModel Fit Summary:\n")
+    print(summary(fit))
+  }
+  acc_ipw_out = data.frame(Est = acc_values,
+                           row.names = c("Sn", "Sp", "PPV", "NPV"))
+  if (description == TRUE) {
+    cat("Estimates of accuracy measures\nCorrected for PVB: Inverse Probability Weighting Estimator Method\n\n")
+  }
+  acc_ipw_list = list(acc_results = acc_ipw_out)
+  return(acc_ipw_list)
+}
+
+acc_ipw_boot_fun = function(data, indices, test, disease, covariate = NULL, saturated_model = FALSE,
+                            show_boot = FALSE, data_all, r_print_freq = 100) {
+  data = data[indices, ] # resample from all (verified + unverified)
+  # bcs ipw involves T & V
+  out = acc_ipw_point(data = data, test, disease, covariate, saturated_model,
+                      show_fit = FALSE, show_boot = show_boot, description = FALSE,
+                      data_all = data_all, r_print_freq = r_print_freq)
+  out = as.matrix(out$acc_results)
+  return(out)
+}
+
+acc_ipw_boot_ci = function(data, test, disease, covariate = NULL, saturated_model = FALSE,
+                           show_fit = FALSE, show_boot = FALSE, description = TRUE,
+                           ci_level = .95, ci_type = "basic",
+                           R = 999, seednum = NULL,
+                           r_print_freq = 100) {
+  # check ci_type, based on 'boot' options
+  ci_type_allowed = c("norm", "basic", "perc", "bca")
+  # only 1 argument allowed
+  if (length(ci_type) > 1) {
+    stop("Invalid 'ci_type' argument.")
+  }
+  # if argument == 1, but type invalid
+  else {
+    if(!any(ci_type == ci_type_allowed)) {
+      stop("Invalid 'ci_type' argument.")
+    }
+  }
+
+  # split data by verified & unverified
+  # data_verified = data[!is.na(data[, disease]), ]  # select disease != NA
+  data_all = data
+
+  # check for presence of seednum
+  if (!is.null(seednum)) {
+    set.seed(seednum)
+  }  # else boot will select its own seednum
+
+  # run ipw & get ci by bootstrap
+  counter <<- 0  # set in .GlobalEnv, else R will clear it!
+  acc_ipw_boot_data = boot::boot(data = data, statistic = acc_ipw_boot_fun, R = R,
+                                 test = test, disease = disease, covariate = covariate, saturated_model = saturated_model,
+                                 show_boot = show_boot, data_all = data_all, r_print_freq = r_print_freq)
+  if(show_boot == TRUE) {cat("[ Total Boot Iteration =", R, "]\n\n")}
+  rm(counter, envir = .GlobalEnv)
+  acc_ipw_boot_est = acc_ipw_boot_data$t0
+  acc_ipw_boot_se = apply(acc_ipw_boot_data$t, 2, sd)
+  acc_ipw_boot_ci_data = lapply(1:4, function(i) boot::boot.ci(acc_ipw_boot_data, conf = ci_level, type = ci_type, index = i))
+  acc_ipw_boot_ci = lapply(acc_ipw_boot_ci_data, function(list) list[[4]][(length(list[[4]])-1):length(list[[4]])])
+  acc_ipw_boot_out = t(sapply(1:4, function(i) c(acc_ipw_boot_est[i, ], acc_ipw_boot_se[i], acc_ipw_boot_ci[[i]])))
+  dimnames(acc_ipw_boot_out) = list(c("Sn", "Sp", "PPV", "NPV"), c("Est", "SE", "LowCI", "UppCI"))
+
+  # output
+  if (show_fit == TRUE) {
+    acc_ipw_point(data, test, disease, verified, covariate, saturated_model, show_fit = TRUE, description = FALSE)
+  }
+  if (description == TRUE) {
+    cat("Estimates of accuracy measures\nCorrected for PVB: Inverse Probability Weighting Estimator Method\n\n")
+  }
+  acc_ipw_boot_list = list(boot_data = acc_ipw_boot_data,
+                           boot_ci_data = acc_ipw_boot_ci_data,
+                           acc_results = acc_ipw_boot_out)  # allows inspection of boot data
+  return(acc_ipw_boot_list)
 }
 
 # SIPW ====
@@ -236,6 +404,13 @@ acc_sipw_point = function(data, test, disease, covariate = NULL, option = 2, sat
   acc_values = apply(acc_resample_list, 2, mean)
 
   # output
+  if (show_boot == TRUE) {  # don't remove, this is for *_boot_ci use
+    if (exists("counter")) {  # counter is set in *_boot_ci
+      if(counter %% r_print_freq == 0) {cat("=== Boot Iteration =", counter, "===\n")}
+      counter <<- counter + 1  # updated in .GlobalEnv, else R will clear it!
+    }
+  }
+
   if (description == TRUE) {
     cat("Estimates of accuracy measures\nCorrected for PVB: Scaled Inverse Probability Weighted Resampling Method\n\n")
   }
@@ -292,7 +467,7 @@ acc_sipw_boot_ci = function(data, test, disease, covariate = NULL,
     set.seed(seednum)
   }  # else boot will select its own seednum
 
-  # run ebg & get ci by bootstrap
+  # run sipw & get ci by bootstrap
   counter <<- 0
   acc_sipw_boot_data = boot::boot(data = data, statistic = acc_sipw_boot_fun, R = R,
                                   test = test, disease = disease, covariate = covariate,
@@ -402,6 +577,13 @@ acc_sipwb_point = function(data, test, disease, covariate = NULL, option = 2, sa
   acc_values = apply(snsp_resample_list, 2, mean)
 
   # output
+  if (show_boot == TRUE) {  # don't remove, this is for *_boot_ci use
+    if (exists("counter")) {  # counter is set in *_boot_ci
+      if(counter %% r_print_freq == 0) {cat("=== Boot Iteration =", counter, "===\n")}
+      counter <<- counter + 1  # updated in .GlobalEnv, else R will clear it!
+    }
+  }
+
   if (description == TRUE) {
     cat("Estimates of accuracy measures\nCorrected for PVB: Scaled Inverse Probability Weighted Balanced Resampling Method\n\n")
   }
@@ -459,7 +641,7 @@ acc_sipwb_boot_ci = function(data, test, disease, covariate = NULL,
     set.seed(seednum)
   }  # else boot will select its own seednum
 
-  # run ebg & get ci by bootstrap
+  # run sipwb & get ci by bootstrap
   counter <<- 0
   acc_sipwb_boot_data = boot::boot(data = data, statistic = acc_sipwb_boot_fun, R = R,
                                    test = test, disease = disease, covariate = covariate,
@@ -504,7 +686,7 @@ em_fun = function(data_pseudo,
 
   # EM Iteration
   t = 1
-  # weight_k must be declared outside this function
+  # weight_k must be declared outside this function, i.e. in .GlobalEnv
   while (t < t_max + 1) {
     # a -- P(D|X)
     model_a = glm(a, data = data_pseudo, family = "binomial", weights = weight_k)
@@ -613,7 +795,7 @@ acc_em_point = function(data, test, disease, covariate = NULL, mnar = TRUE,
   }
 
   # the EM run
-  weight_k <<- rep(1, nrow(data_pseudo))  # to global environment
+  weight_k <<- rep(1, nrow(data_pseudo))  # to .GlobalEnv, else R will clear it!
   em_out = em_fun(data_pseudo,
                   show_t = show_t,
                   t_max = t_max, cutoff = cutoff,
@@ -664,7 +846,8 @@ acc_em_point = function(data, test, disease, covariate = NULL, mnar = TRUE,
     cat(paste("Finished Boot Iteration =", counter, "\n"))
     cat("=========================\n")
     cat("\n")
-    counter <<- counter + 1  # <<- so that counter won't reset with each boot iter
+    counter <<- counter + 1  # <<- updated in .GlobalEnv,
+    # so that counter won't reset with each boot iteration
   }
 
   # normal output
@@ -741,6 +924,7 @@ acc_em_boot_ci = function(data, test, disease, covariate = NULL, mnar = TRUE,
 
   # run em & get ci by bootstrap
   counter <<- 0  # starts counter for number of bootstrap iteration
+  # set in .GlobalEnv, else R will clear it!
   acc_em_boot_data = boot::boot(data = data_verified, statistic = acc_em_boot_fun, R = R,
                           test = test, disease = disease, covariate = covariate, mnar = mnar,
                           show_t = show_t, t_max = t_max, cutoff = cutoff,
