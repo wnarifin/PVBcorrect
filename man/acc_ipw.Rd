@@ -69,7 +69,7 @@ acc_ipw(data = cad_pvb, test = "T", disease = "D")
 acc_ipw(data = cad_pvb, test = "T", disease = "D", covariate = "X3")
 
 # with bootstrapped confidence interval
-acc_ipw(data = cad_pvb, test = "T", disease = "D", ci = TRUE, seednum = 12345)
+acc_ipw(data = cad_pvb, test = "T", disease = "D", ci = TRUE, R = 99, seednum = 12345)
 }
 \references{
 \enumerate{

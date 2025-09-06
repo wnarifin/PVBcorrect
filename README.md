@@ -29,6 +29,8 @@ install.packages("devtools")
 devtools::install_github("wnarifin/PVBcorrect")
 ```
 
+or directly from CRAN (in process).
+
 ## Usage, news and updates
 
 Please view Wiki page: https://github.com/wnarifin/PVBcorrect/wiki

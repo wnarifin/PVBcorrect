@@ -57,6 +57,6 @@ Useful links:
 
 }
 \author{
-\strong{Maintainer}: Wan Nor Arifin \email{wnarifin@gmail.com} (\href{https://orcid.org/0000-0001-7786-4251}{ORCID})
+\strong{Maintainer}: Wan Nor Arifin \email{wnarifin@gmail.com} (\href{https://orcid.org/0000-0001-7786-4251}{ORCID}) [copyright holder]
 
 }
