@@ -37,7 +37,7 @@ Please view Wiki page: https://github.com/wnarifin/PVBcorrect/wiki
 
 ## License
 
-This project is licensed under the GPL (>= 3) License - see the [LICENSE.md](LICENSE.md) file for details.
+This project is licensed under the MIT License - see the [LICENSE.md](LICENSE.md) and LICENSE files for details.
 
 ## References
 
