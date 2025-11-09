@@ -37,7 +37,7 @@ devtools::install_github("wnarifin/PVBcorrect")
 
 ## Usage, news and updates
 
-Please view Wiki page: https://github.com/wnarifin/PVBcorrect/wiki
+Please view Wiki page: <https://github.com/wnarifin/PVBcorrect/wiki>
 
 ## References
 
