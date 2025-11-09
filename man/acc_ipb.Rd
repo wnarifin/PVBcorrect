@@ -34,7 +34,7 @@ Specify as name vector, e.g. c("X1", "X2") for two or more variables. The variab
 \item{saturated_model}{Set as \code{TRUE} to obtain the original Begg and Greenes' (1983) when all possible interactions are included.}
 
 \item{option}{1 = IPW weight, 2 = W_h weight, described in Arifin (2023), modified weight of Krautenbacher (2017).
-The default is \code{option = 1}. For small weights, \code{option = 2} is more stable (Arifin, 2023).}
+The default is \code{option = 2}. For small weights, \code{option = 2} is more stable (Arifin, 2023).}
 
 \item{ci}{View confidence interval (CI). The default is \code{FALSE}.}
 
@@ -79,7 +79,7 @@ acc_ipb(data = cad_pvb, test = "T", disease = "D", ci = TRUE,
 \enumerate{
   \item{Arifin, W. N., & Yusof, U. K. (2022). Partial Verification Bias Correction Using Inverse Probability Bootstrap Sampling for Binary Diagnostic Tests. Diagnostics, 12(11), 2839.}
   \item{Arifin, W. N. (2023). Partial verification bias correction in diagnostic accuracy studies using propensity score-based methods (PhD thesis, Universiti Sains Malaysia). https://erepo.usm.my/handle/123456789/19184}
-  \item{Krautenbacher, N., Theis, F. J., & Fuchs, C. (2017). Correcting Classifiers for Sample Selection Bias in Two-Phase Case-Control Studies. Computational and Mathematical Methods in Medicine, 2017, 1–18. https://doi.org/10.1155/2017/7847531}
+  \item{Krautenbacher, N., Theis, F. J., & Fuchs, C. (2017). Correcting Classifiers for Sample Selection Bias in Two-Phase Case-Control Studies. Computational and Mathematical Methods in Medicine, 2017, 1–18.}
   \item{Nahorniak, M., Larsen, D. P., Volk, C., & Jordan, C. E. (2015). Using inverse probability bootstrap sampling to eliminate sample induced bias in model based analysis of unequal probability samples. PLoS One, 10(6), e0131765.}
 }
 }

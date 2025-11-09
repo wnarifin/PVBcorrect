@@ -419,7 +419,7 @@ acc_ipw = function(data, test, disease, covariate = NULL, saturated_model = FALS
 #' @inheritParams acc_ebg
 #' @param b The number of bootstrap samples, b.
 #' @param option 1 = IPW weight, 2 = W_h weight, described in Arifin (2023), modified weight of Krautenbacher (2017).
-#'   The default is \code{option = 1}. For small weights, \code{option = 2} is more stable (Arifin, 2023).
+#'   The default is \code{option = 2}. For small weights, \code{option = 2} is more stable (Arifin, 2023).
 #' @param ci_type Set confidence interval (CI) type. Acceptable types are "norm", "basic", "perc", and "bca",
 #'   for bootstrapped CI.
 #' @param return_data Return data for the bootstrapped samples.
@@ -434,7 +434,7 @@ acc_ipw = function(data, test, disease, covariate = NULL, saturated_model = FALS
 #' \enumerate{
 #'   \item{Arifin, W. N., & Yusof, U. K. (2022). Partial Verification Bias Correction Using Inverse Probability Bootstrap Sampling for Binary Diagnostic Tests. Diagnostics, 12(11), 2839.}
 #'   \item{Arifin, W. N. (2023). Partial verification bias correction in diagnostic accuracy studies using propensity score-based methods (PhD thesis, Universiti Sains Malaysia). https://erepo.usm.my/handle/123456789/19184}
-#'   \item{Krautenbacher, N., Theis, F. J., & Fuchs, C. (2017). Correcting Classifiers for Sample Selection Bias in Two-Phase Case-Control Studies. Computational and Mathematical Methods in Medicine, 2017, 1–18. https://doi.org/10.1155/2017/7847531}
+#'   \item{Krautenbacher, N., Theis, F. J., & Fuchs, C. (2017). Correcting Classifiers for Sample Selection Bias in Two-Phase Case-Control Studies. Computational and Mathematical Methods in Medicine, 2017, 1–18.}
 #'   \item{Nahorniak, M., Larsen, D. P., Volk, C., & Jordan, C. E. (2015). Using inverse probability bootstrap sampling to eliminate sample induced bias in model based analysis of unequal probability samples. PLoS One, 10(6), e0131765.}
 #' }
 #' @examples
@@ -455,9 +455,10 @@ acc_ipb = function(data, test, disease, covariate = NULL, saturated_model = FALS
                    description = TRUE) {
   # data = original data
   # add verification status
-  # verified: 1 = yes, 0 = no
-  data = transform(data, verified = ifelse(is.na(get(disease)), 0, 1))
   verified = "verified"
+  data$verified = 1  # verified: 1 = yes, 0 = no
+  data[is.na(data[, disease]), verified] = 0  # classic style, but never as erratic
+  # as get() and with()
 
   # setup empty vector
   acc_values = rep(NA, 4)  # Sn Sp only
@@ -595,10 +596,10 @@ acc_ipb = function(data, test, disease, covariate = NULL, saturated_model = FALS
 #' }
 #' @references
 #' \enumerate{
-#'   \item{Arifin, W. N., & Yusof, U. K. (2025). Partial Verification Bias Correction Using Scaled Inverse Probability Resampling for Binary Diagnostic Tests. medRxiv. https://doi.org/10.1101/2025.03.09.25323631}
+#'   \item{Arifin, W. N., & Yusof, U. K. (2025). Partial verification bias correction using scaled inverse probability resampling for binary diagnostic tests. PloS One, 20(9), e0321440.}
 #'   \item{Arifin, W. N., & Yusof, U. K. (2022). Partial Verification Bias Correction Using Inverse Probability Bootstrap Sampling for Binary Diagnostic Tests. Diagnostics, 12(11), 2839.}
 #'   \item{Arifin, W. N. (2023). Partial verification bias correction in diagnostic accuracy studies using propensity score-based methods (PhD thesis, Universiti Sains Malaysia). https://erepo.usm.my/handle/123456789/19184}
-#'   \item{Krautenbacher, N., Theis, F. J., & Fuchs, C. (2017). Correcting Classifiers for Sample Selection Bias in Two-Phase Case-Control Studies. Computational and Mathematical Methods in Medicine, 2017, 1–18. https://doi.org/10.1155/2017/7847531}
+#'   \item{Krautenbacher, N., Theis, F. J., & Fuchs, C. (2017). Correcting Classifiers for Sample Selection Bias in Two-Phase Case-Control Studies. Computational and Mathematical Methods in Medicine, 2017, 1–18.}
 #'   \item{Nahorniak, M., Larsen, D. P., Volk, C., & Jordan, C. E. (2015). Using inverse probability bootstrap sampling to eliminate sample induced bias in model based analysis of unequal probability samples. PLoS One, 10(6), e0131765.}
 #' }
 #' @examples
@@ -640,10 +641,10 @@ acc_sipw = function(data, test, disease, covariate = NULL, saturated_model = FAL
 # SIPW-B method
 # Arifin, 2023, 2025
 # SIPW-B is an extension of IPB method for PVB correction with balanced grouping
-#' PVB correction by scaled inverse probability weighted balanced resampling (SIPW-B). SIPW-B only gives results
-#' for Sensitivity and Specificity, for PPV and NPV please use SIPW instead.
+#' PVB correction by scaled inverse probability weighted balanced resampling (SIPW-B).
 #'
 #' @description Perform PVB correction by scaled inverse probability weighted balanced resampling.
+#'   SIPW-B only gives resultsfor Sensitivity and Specificity, for PPV and NPV please use SIPW instead.
 #' @inheritParams acc_ebg
 #' @param b The number of repeated samples, b.
 #' @param option 1 = IPW weight, 2 = W_h weight, described in Arifin (2023), modified weight of Krautenbacher (2017).
@@ -657,10 +658,10 @@ acc_sipw = function(data, test, disease, covariate = NULL, saturated_model = FAL
 #' }
 #' @references
 #' \enumerate{
-#'   \item{Arifin, W. N., & Yusof, U. K. (2025). Partial Verification Bias Correction Using Scaled Inverse Probability Resampling for Binary Diagnostic Tests. medRxiv. https://doi.org/10.1101/2025.03.09.25323631}
+#'   \item{Arifin, W. N., & Yusof, U. K. (2025). Partial verification bias correction using scaled inverse probability resampling for binary diagnostic tests. PloS One, 20(9), e0321440.}
 #'   \item{Arifin, W. N., & Yusof, U. K. (2022). Partial Verification Bias Correction Using Inverse Probability Bootstrap Sampling for Binary Diagnostic Tests. Diagnostics, 12(11), 2839.}
 #'   \item{Arifin, W. N. (2023). Partial verification bias correction in diagnostic accuracy studies using propensity score-based methods (PhD thesis, Universiti Sains Malaysia). https://erepo.usm.my/handle/123456789/19184}
-#'   \item{Krautenbacher, N., Theis, F. J., & Fuchs, C. (2017). Correcting Classifiers for Sample Selection Bias in Two-Phase Case-Control Studies. Computational and Mathematical Methods in Medicine, 2017, 1–18. https://doi.org/10.1155/2017/7847531}
+#'   \item{Krautenbacher, N., Theis, F. J., & Fuchs, C. (2017). Correcting Classifiers for Sample Selection Bias in Two-Phase Case-Control Studies. Computational and Mathematical Methods in Medicine, 2017, 1–18.}
 #'   \item{Nahorniak, M., Larsen, D. P., Volk, C., & Jordan, C. E. (2015). Using inverse probability bootstrap sampling to eliminate sample induced bias in model based analysis of unequal probability samples. PLoS One, 10(6), e0131765.}
 #' }
 #' @examples
@@ -723,10 +724,10 @@ acc_sipwb = function(data, test, disease, covariate = NULL, saturated_model = FA
 #'   \item{Harel, O., & Zhou, X.-H. (2006). Multiple imputation for correcting verification bias. Statistics in Medicine, 25(22), 3769–3786.}
 #' }
 #' @examples
-#' # point estimates
+#' # with logreg
 #' acc_mi(data = cad_pvb, test = "T", disease = "D", ci = TRUE, seednum = 12345, m = 5)
 #'
-#' # with other imputation method. e.g. random forest "rf"
+#' # with other imputation method. e.g. predictive mean matching "pmm"
 #' acc_mi(data = cad_pvb, test = "T", disease = "D", ci = TRUE, seednum = 12345, m = 5,
 #'        method = "pmm")
 #'
@@ -847,7 +848,7 @@ acc_mi = function(data, test, disease, covariate = NULL,
 #'
 #' # without covariate
 #' em_out = acc_em(data = cad_pvb, test = "T", disease = "D", ci = TRUE, seednum = 12345,
-#'                 R = 2, t_max = 100, cutoff = 0.005)
+#'                 R = 2, t_max = 100, cutoff = 0.01)
 #' em_out$acc_results
 #' em_out$boot_data$t  # bootstrapped data, 1:5 columns are Sn, Sp, PPV, NPV,
 #'                     # t (i.e. EM iteration taken for convergence)
@@ -859,6 +860,9 @@ acc_em = function(data, test, disease, covariate = NULL, mnar = TRUE,
                   show_t = TRUE, t_max = 500, cutoff = 0.0001,
                   t_print_freq = 100, return_t = FALSE, r_print_freq = 100,
                   description = TRUE) {
+  # show_boot=TRUE is FORCED to be the default,
+  # because it takes very long time to finish
+
   # w/out ci
   if (ci == FALSE) {
   acc_em_point(data, test, disease, covariate, mnar,

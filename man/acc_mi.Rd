@@ -56,10 +56,10 @@ A list object containing:
 Perform PVB correction by multiple imputation.
 }
 \examples{
-# point estimates
+# with logreg
 acc_mi(data = cad_pvb, test = "T", disease = "D", ci = TRUE, seednum = 12345, m = 5)
 
-# with other imputation method. e.g. random forest "rf"
+# with other imputation method. e.g. predictive mean matching "pmm"
 acc_mi(data = cad_pvb, test = "T", disease = "D", ci = TRUE, seednum = 12345, m = 5,
        method = "pmm")
 

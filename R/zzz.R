@@ -1,3 +1,4 @@
 # R/zzz.R
 #' @keywords internal
-utils::globalVariables(c("counter", "verified", "weight_k"))
+utils::globalVariables(c("verified"))
+.pvbcorrect_env = new.env(parent = emptyenv())

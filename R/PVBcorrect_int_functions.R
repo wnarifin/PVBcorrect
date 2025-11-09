@@ -75,9 +75,12 @@ acc_ebg_point = function(data, test, disease, covariate = NULL, saturated_model 
   # output
   if (show_boot == TRUE) {  # don't remove, this is for *_boot_ci use
     show_fit = FALSE  # force set as FALSE
-    if (exists("counter")) {  # counter is set in *_boot_ci
+    # get internal environment
+    if (exists("counter_int", envir = .pvbcorrect_env)) {  # counter is set in *_boot_ci
+      counter = get("counter_int", envir = .pvbcorrect_env)
       if(counter %% r_print_freq == 0) {cat("=== Boot Iteration =", counter, "===\n")}
-      counter <<- counter + 1  # updated in .GlobalEnv, else R will clear it!
+      counter = counter + 1  # update internal environment
+      assign("counter_int", counter, envir = .pvbcorrect_env)
     }
   }
   if (show_fit == TRUE) {
@@ -135,12 +138,15 @@ acc_ebg_boot_ci = function(data, test, disease, covariate = NULL, saturated_mode
   }  # else boot will select its own seednum
 
   # run ebg & get ci by bootstrap
-  counter <<- 0  # set in .GlobalEnv, else R will clear it!
+  # set internal environment
+  if (!exists("counter_int", envir = .pvbcorrect_env)) {
+    assign("counter_int", 0, .pvbcorrect_env) # set in package environment
+  }
   acc_ebg_boot_data = boot::boot(data = data_verified, statistic = acc_ebg_boot_fun, R = R,
                            test = test, disease = disease, covariate = covariate, saturated_model = saturated_model,
                            show_boot = show_boot, data_all = data_all, r_print_freq = r_print_freq)
   if(show_boot == TRUE) {cat("[ Total Boot Iteration =", R, "]\n\n")}
-  rm(counter, envir = .GlobalEnv)
+  rm("counter_int", envir = .pvbcorrect_env)
   acc_ebg_boot_est = acc_ebg_boot_data$t0
   acc_ebg_boot_se = apply(acc_ebg_boot_data$t, 2, sd)
   acc_ebg_boot_ci_data = lapply(1:4, function(i) boot::boot.ci(acc_ebg_boot_data, conf = ci_level, type = ci_type, index = i))
@@ -246,9 +252,12 @@ acc_ipw_point = function(data, test, disease, covariate = NULL, saturated_model 
   # output
   if (show_boot == TRUE) {  # don't remove, this is for *_boot_ci use
     show_fit = FALSE  # force set as FALSE
-    if (exists("counter")) {  # counter is set in *_boot_ci
+    # get internal environment
+    if (exists("counter_int", envir = .pvbcorrect_env)) {  # counter is set in *_boot_ci
+      counter = get("counter_int", envir = .pvbcorrect_env)
       if(counter %% r_print_freq == 0) {cat("=== Boot Iteration =", counter, "===\n")}
-      counter <<- counter + 1  # updated in .GlobalEnv, else R will clear it!
+      counter = counter + 1  # update internal environment
+      assign("counter_int", counter, envir = .pvbcorrect_env)
     }
   }
   if (show_fit == TRUE) {
@@ -304,12 +313,15 @@ acc_ipw_boot_ci = function(data, test, disease, covariate = NULL, saturated_mode
   }  # else boot will select its own seednum
 
   # run ipw & get ci by bootstrap
-  counter <<- 0  # set in .GlobalEnv, else R will clear it!
+  # set internal environment
+  if (!exists("counter_int", envir = .pvbcorrect_env)) {
+    assign("counter_int", 0, .pvbcorrect_env) # set in package environment
+  }
   acc_ipw_boot_data = boot::boot(data = data, statistic = acc_ipw_boot_fun, R = R,
                                  test = test, disease = disease, covariate = covariate, saturated_model = saturated_model,
                                  show_boot = show_boot, data_all = data_all, r_print_freq = r_print_freq)
   if(show_boot == TRUE) {cat("[ Total Boot Iteration =", R, "]\n\n")}
-  rm(counter, envir = .GlobalEnv)
+  rm("counter_int", envir = .pvbcorrect_env)
   acc_ipw_boot_est = acc_ipw_boot_data$t0
   acc_ipw_boot_se = apply(acc_ipw_boot_data$t, 2, sd)
   acc_ipw_boot_ci_data = lapply(1:4, function(i) boot::boot.ci(acc_ipw_boot_data, conf = ci_level, type = ci_type, index = i))
@@ -405,9 +417,12 @@ acc_sipw_point = function(data, test, disease, covariate = NULL, option = 2, sat
 
   # output
   if (show_boot == TRUE) {  # don't remove, this is for *_boot_ci use
-    if (exists("counter")) {  # counter is set in *_boot_ci
+    # get internal environment
+    if (exists("counter_int", envir = .pvbcorrect_env)) {  # counter is set in *_boot_ci
+      counter = get("counter_int", envir = .pvbcorrect_env)
       if(counter %% r_print_freq == 0) {cat("=== Boot Iteration =", counter, "===\n")}
-      counter <<- counter + 1  # updated in .GlobalEnv, else R will clear it!
+      counter = counter + 1  # update internal environment
+      assign("counter_int", counter, envir = .pvbcorrect_env)
     }
   }
 
@@ -468,14 +483,17 @@ acc_sipw_boot_ci = function(data, test, disease, covariate = NULL,
   }  # else boot will select its own seednum
 
   # run sipw & get ci by bootstrap
-  counter <<- 0
+  # set internal environment
+  if (!exists("counter_int", envir = .pvbcorrect_env)) {
+    assign("counter_int", 0, .pvbcorrect_env) # set in package environment
+  }
   acc_sipw_boot_data = boot::boot(data = data, statistic = acc_sipw_boot_fun, R = R,
                                   test = test, disease = disease, covariate = covariate,
                                   saturated_model = saturated_model, option = option, b = b, seednum = seednum,
                                   show_boot = show_boot,
                                   r_print_freq = r_print_freq)
   if(show_boot == TRUE) {cat("[ Total Boot Iteration =", R, "]\n\n")}
-  rm(counter, envir = .GlobalEnv)
+  rm("counter_int", envir = .pvbcorrect_env)
   acc_sipw_boot_est = acc_sipw_boot_data$t0
   acc_sipw_boot_se = apply(acc_sipw_boot_data$t, 2, sd)
   acc_sipw_boot_ci_data = lapply(1:4, function(i) boot::boot.ci(acc_sipw_boot_data, conf = ci_level, type = ci_type, index = i))
@@ -578,9 +596,12 @@ acc_sipwb_point = function(data, test, disease, covariate = NULL, option = 2, sa
 
   # output
   if (show_boot == TRUE) {  # don't remove, this is for *_boot_ci use
-    if (exists("counter")) {  # counter is set in *_boot_ci
+    # get internal environment
+    if (exists("counter_int", envir = .pvbcorrect_env)) {  # counter is set in *_boot_ci
+      counter = get("counter_int", envir = .pvbcorrect_env)
       if(counter %% r_print_freq == 0) {cat("=== Boot Iteration =", counter, "===\n")}
-      counter <<- counter + 1  # updated in .GlobalEnv, else R will clear it!
+      counter = counter + 1  # update internal environment
+      assign("counter_int", counter, envir = .pvbcorrect_env)
     }
   }
 
@@ -642,7 +663,10 @@ acc_sipwb_boot_ci = function(data, test, disease, covariate = NULL,
   }  # else boot will select its own seednum
 
   # run sipwb & get ci by bootstrap
-  counter <<- 0
+  # set internal environment
+  if (!exists("counter_int", envir = .pvbcorrect_env)) {
+    assign("counter_int", 0, .pvbcorrect_env) # set in package environment
+  }
   acc_sipwb_boot_data = boot::boot(data = data, statistic = acc_sipwb_boot_fun, R = R,
                                    test = test, disease = disease, covariate = covariate,
                                    saturated_model = saturated_model, option = option, rel_size = rel_size,
@@ -650,7 +674,7 @@ acc_sipwb_boot_ci = function(data, test, disease, covariate = NULL,
                                    show_boot = show_boot,
                                    r_print_freq = r_print_freq)
   if(show_boot == TRUE) {cat("[ Total Boot Iteration =", R, "]\n\n")}
-  rm(counter, envir = .GlobalEnv)
+  rm("counter_int", envir = .pvbcorrect_env)
   acc_sipwb_boot_est = acc_sipwb_boot_data$t0
   acc_sipwb_boot_se = apply(acc_sipwb_boot_data$t, 2, sd)
   acc_sipwb_boot_ci_data = lapply(1:2, function(i) boot::boot.ci(acc_sipwb_boot_data, conf = ci_level, type = ci_type, index = i))
@@ -686,8 +710,16 @@ em_fun = function(data_pseudo,
 
   # EM Iteration
   t = 1
-  # weight_k must be declared outside this function, i.e. in .GlobalEnv
+  # set weight_k_int in internal environment
+  if (!exists("weight_k_int", envir = .pvbcorrect_env)) {
+    assign("weight_k_int",
+           rep(1, nrow(data_pseudo)), # to internal environment
+           envir = .pvbcorrect_env) # set in package environment
+  }
   while (t < t_max + 1) {
+    # get weight_k at each iteration
+    weight_k = get("weight_k_int", envir = .pvbcorrect_env)
+    data_pseudo$weight_k = weight_k  # need to put df, else glm could not find it
     # a -- P(D|X)
     model_a = glm(a, data = data_pseudo, family = "binomial", weights = weight_k)
     su_model_a = summary(model_a)
@@ -712,8 +744,11 @@ em_fun = function(data_pseudo,
     p1 = (fitted_ps[[2]]^ys[[2]]) * ((1 - fitted_ps[[2]])^(1 - ys[[2]]))  # P(T|D,X)
     p2 = (fitted_ps[[3]]^ys[[3]]) * ((1 - fitted_ps[[3]])^(1 - ys[[3]]))  # P(V|T,X,D)
     pk = p0 * p1 * p2  # P(V,T,D)
-    weight_k[index_2] <<- pk[index_2] / (pk[index_2] + pk[index_3])  # =/<- not working here
-    weight_k[index_3] <<- 1 - weight_k[index_2]  # =/<- not working here
+    # update relevant weights
+    weight_k[index_2] = pk[index_2] / (pk[index_2] + pk[index_3])
+    weight_k[index_3] = 1 - weight_k[index_2]
+    # send back to weight_k_int
+    assign("weight_k_int", weight_k, envir = .pvbcorrect_env)
     # check if change in coef < 0.001 in abs value
     if (t < 2) {
       diffs_t = cutoff + 1
@@ -795,14 +830,14 @@ acc_em_point = function(data, test, disease, covariate = NULL, mnar = TRUE,
   }
 
   # the EM run
-  weight_k <<- rep(1, nrow(data_pseudo))  # to .GlobalEnv, else R will clear it!
   em_out = em_fun(data_pseudo,
                   show_t = show_t,
                   t_max = t_max, cutoff = cutoff,
                   a = a, b = b, c = c,
                   index_1, index_2, index_3,
                   t_print_freq = t_print_freq)
-  rm(weight_k, envir = .GlobalEnv)  # rm from environment
+  rm("weight_k_int", envir = .pvbcorrect_env)  # remove as em_fun is finished
+  # see em_fun, weight_k_int is set there
 
   # calculate measures
   # setup empty vector
@@ -843,11 +878,13 @@ acc_em_point = function(data, test, disease, covariate = NULL, mnar = TRUE,
   }
 
   if (show_boot == TRUE) {
-    cat(paste("Finished Boot Iteration =", counter, "\n"))
-    cat("=========================\n")
-    cat("\n")
-    counter <<- counter + 1  # <<- updated in .GlobalEnv,
-    # so that counter won't reset with each boot iteration
+    # get internal environment
+    if (exists("counter_int", envir = .pvbcorrect_env)) {  # counter is set in *_boot_ci
+      counter = get("counter_int", envir = .pvbcorrect_env)
+      if(counter %% r_print_freq == 0) {cat("=== Boot Iteration =", counter, "===\n")}
+      counter = counter + 1  # update internal environment
+      assign("counter_int", counter, envir = .pvbcorrect_env)
+    }
   }
 
   # normal output
@@ -923,15 +960,18 @@ acc_em_boot_ci = function(data, test, disease, covariate = NULL, mnar = TRUE,
   }  # else boot will select its own seednum
 
   # run em & get ci by bootstrap
-  counter <<- 0  # starts counter for number of bootstrap iteration
-  # set in .GlobalEnv, else R will clear it!
+  # starts counter for number of bootstrap iteration
+  # set internal environment
+  if (!exists("counter_int", envir = .pvbcorrect_env)) {
+    assign("counter_int", 0, .pvbcorrect_env) # set in package environment
+  }
   acc_em_boot_data = boot::boot(data = data_verified, statistic = acc_em_boot_fun, R = R,
                           test = test, disease = disease, covariate = covariate, mnar = mnar,
                           show_t = show_t, t_max = t_max, cutoff = cutoff,
                           data_unverified = data_unverified,
                           t_print_freq = t_print_freq, r_print_freq = r_print_freq)
   if(show_boot == TRUE) {cat("[ Total Boot Iteration =", R, "]\n\n")}
-  rm(counter, envir = .GlobalEnv)
+  rm("counter_int", envir = .pvbcorrect_env)
   acc_em_boot_est = acc_em_boot_data$t0
   acc_em_boot_se = apply(acc_em_boot_data$t[, 1:4], 2, sd)
   acc_em_boot_ci_data = lapply(1:4, function(i) boot::boot.ci(acc_em_boot_data, conf = ci_level, type = ci_type, index = i))

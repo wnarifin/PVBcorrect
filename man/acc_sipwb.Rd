@@ -2,8 +2,7 @@
 % Please edit documentation in R/PVBcorrect_functions.R
 \name{acc_sipwb}
 \alias{acc_sipwb}
-\title{PVB correction by scaled inverse probability weighted balanced resampling (SIPW-B). SIPW-B only gives results
-for Sensitivity and Specificity, for PPV and NPV please use SIPW instead.}
+\title{PVB correction by scaled inverse probability weighted balanced resampling (SIPW-B).}
 \usage{
 acc_sipwb(
   data,
@@ -76,6 +75,7 @@ A list object containing:
 }
 \description{
 Perform PVB correction by scaled inverse probability weighted balanced resampling.
+  SIPW-B only gives resultsfor Sensitivity and Specificity, for PPV and NPV please use SIPW instead.
 }
 \examples{
 # point estimates
@@ -89,10 +89,10 @@ acc_sipwb(data = cad_pvb, test = "T", disease = "D", ci = TRUE,
 }
 \references{
 \enumerate{
-  \item{Arifin, W. N., & Yusof, U. K. (2025). Partial Verification Bias Correction Using Scaled Inverse Probability Resampling for Binary Diagnostic Tests. medRxiv. https://doi.org/10.1101/2025.03.09.25323631}
+  \item{Arifin, W. N., & Yusof, U. K. (2025). Partial verification bias correction using scaled inverse probability resampling for binary diagnostic tests. PloS One, 20(9), e0321440.}
   \item{Arifin, W. N., & Yusof, U. K. (2022). Partial Verification Bias Correction Using Inverse Probability Bootstrap Sampling for Binary Diagnostic Tests. Diagnostics, 12(11), 2839.}
   \item{Arifin, W. N. (2023). Partial verification bias correction in diagnostic accuracy studies using propensity score-based methods (PhD thesis, Universiti Sains Malaysia). https://erepo.usm.my/handle/123456789/19184}
-  \item{Krautenbacher, N., Theis, F. J., & Fuchs, C. (2017). Correcting Classifiers for Sample Selection Bias in Two-Phase Case-Control Studies. Computational and Mathematical Methods in Medicine, 2017, 1–18. https://doi.org/10.1155/2017/7847531}
+  \item{Krautenbacher, N., Theis, F. J., & Fuchs, C. (2017). Correcting Classifiers for Sample Selection Bias in Two-Phase Case-Control Studies. Computational and Mathematical Methods in Medicine, 2017, 1–18.}
   \item{Nahorniak, M., Larsen, D. P., Volk, C., & Jordan, C. E. (2015). Using inverse probability bootstrap sampling to eliminate sample induced bias in model based analysis of unequal probability samples. PLoS One, 10(6), e0131765.}
 }
 }

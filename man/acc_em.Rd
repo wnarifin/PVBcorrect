@@ -91,7 +91,7 @@ Perform PVB correction by EM-based logistic regression method.
 
 # without covariate
 em_out = acc_em(data = cad_pvb, test = "T", disease = "D", ci = TRUE, seednum = 12345,
-                R = 2, t_max = 100, cutoff = 0.005)
+                R = 2, t_max = 100, cutoff = 0.01)
 em_out$acc_results
 em_out$boot_data$t  # bootstrapped data, 1:5 columns are Sn, Sp, PPV, NPV,
                     # t (i.e. EM iteration taken for convergence)

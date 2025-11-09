@@ -6,10 +6,10 @@ available methods are:
 
 - Begg and Greenes' method (as extended by Alonzo & Pepe, 2005)
 - Begg and Greenes' method 1 and 2 (with PPV and NPV as extended by deGroot et al, 2011)
-- Multiple imputation method by logistic regression (Harel & Zhou, 2006)
 - EM-based logistic regression method (Kosinski & Barnhart, 2003)
 - Inverse Probability Weighting (IPW) method (Alonzo & Pepe, 2005) 
 - Inverse Probability Bootstrap (IPB) sampling method (Arifin & Yusof, 2022; Nahorniak et al., 2015)
+- Multiple imputation method by logistic regression (Harel & Zhou, 2006)
 - Scaled Inverse Probability Resampling methods (Arifin & Yusof, 2023; Arifin & Yusof, 2025)
 
 ## Prerequisites
@@ -22,22 +22,22 @@ install.packages("boot", "mice")
 
 ## Installation
 
-Install PVBcorrect package by running
+Install PVBcorrect package from CRAN:
 
+``` r
+install.packages("PVBcorrect")
 ```
+
+or from GitHub:
+
+``` r
 install.packages("devtools")
 devtools::install_github("wnarifin/PVBcorrect")
 ```
 
-or directly from CRAN (in process).
-
 ## Usage, news and updates
 
 Please view Wiki page: https://github.com/wnarifin/PVBcorrect/wiki
-
-## License
-
-This project is licensed under the MIT License - see the [LICENSE.md](LICENSE.md) and LICENSE files for details.
 
 ## References
 
